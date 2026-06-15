@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: terbitkata_prod_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: terbitkata
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: terbitkata_prod_app
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/terbitkata?schema=public
+      NEXTAUTH_SECRET: default_super_secret_production_key_99998888
+      NEXTAUTH_URL: http://localhost
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    container_name: terbitkata_prod_nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+
+volumes:
+  pgdata_prod:

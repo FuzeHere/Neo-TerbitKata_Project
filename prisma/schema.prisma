@@ -1,0 +1,92 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  WRITER
+}
+
+model User {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      @default(WRITER)
+  avatar    String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  articles  Article[]
+
+  @@map("users")
+}
+
+model Article {
+  id          String     @id @default(uuid())
+  title       String
+  slug        String     @unique
+  excerpt     String
+  content     String     @db.Text
+  thumbnail   String?
+  authorId    String     @map("author_id")
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  publishedAt DateTime?  @map("published_at")
+  isFeatured  Boolean    @default(false) @map("is_featured")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  categories  Category[]
+  tags        Tag[]
+  comments    Comment[]
+
+  @@map("articles")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  articles    Article[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  slug     String    @unique
+  articles Article[]
+
+  @@map("tags")
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Comment {
+  id        String        @id @default(uuid())
+  articleId String        @map("article_id")
+  article   Article       @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  content   String        @db.Text
+  status    CommentStatus @default(PENDING)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("comments")
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("newsletter_subscribers")
+}

@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TerbitKata - Portal Berita Digital
 
-## Getting Started
+TerbitKata adalah platform portal berita digital premium independen yang responsif, berkinerja tinggi, dan ramah SEO, dibangun menggunakan Next.js 15/16, Tailwind CSS, Prisma ORM, dan PostgreSQL.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Fitur Utama
+
+- **Premium & Responsive UI**: Desain modern dengan dukungan dark mode, grid artikel dinamis, hero banner, dan sub-navigasi khusus mobile yang dapat di-scroll secara horizontal.
+- **CMS Admin Panel**: Fitur manajemen lengkap (CRUD Artikel, Kategori, Tag, moderasi komentar, dan pengelolaan user penulis) dengan hak akses berbasis peran (Role: SUPER_ADMIN dan WRITER).
+- **Highlight Utama**: Pilihan untuk menyorot artikel penting (`isFeatured`) sebagai berita utama di homepage dengan mekanisme auto-reset.
+- **Sistem Komentar & CAPTCHA**: Fitur komentar publik yang dilengkapi verifikasi Math CAPTCHA berbasis HMAC SHA256 stateless untuk mencegah spam, serta penyaringan kata-kata kasar otomatis.
+- **SEO & Google News Ready**: Dilengkapi dengan RSS Feed dinamis (`/feed.xml`), Sitemap dinamis (`/sitemap.xml`), dan Structured Data JSON-LD (`NewsArticle`).
+- **TDD (Test-Driven Development)**: Pengujian unit test mandiri menggunakan Vitest untuk utilitas pembuatan slug, estimasi waktu baca, filter spam, dan token CAPTCHA.
+
+---
+
+## Cara Menjalankan
+
+### 1. Kebutuhan Sistem
+- Node.js (v18 ke atas)
+- PostgreSQL (dapat dijalankan via Docker)
+
+### 2. Pengaturan Environment
+Salin berkas `.env.example` menjadi `.env` dan sesuaikan nilainya:
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/terbitkata?schema=public"
+NEXTAUTH_SECRET="your_nextauth_secret_here"
+NEXTAUTH_URL="http://localhost:3000"
+CAPTCHA_SECRET="your_captcha_hmac_secret_here"
+SPAM_KEYWORDS="badword1,badword2,spammytext"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Instalasi & Migrasi Database
+```bash
+# Instal dependensi
+npm install
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Jalankan database PostgreSQL lokal menggunakan Docker
+docker-compose up -d
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Terapkan migrasi database dan seeding data admin/artikel default
+npx prisma db push
+npx prisma db seed
+```
 
-## Learn More
+### 4. Menjalankan Server Pengembangan
+```bash
+npm run dev
+```
+Buka [http://localhost:3000](http://localhost:3000) untuk mengakses portal publik. Untuk login admin, buka tautan langsung ke `/login` menggunakan akun:
+* **Email**: `admin@terbitkata.com`
+* **Password**: `AdminTerbitKata2026!`
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Pengujian TDD (Unit Testing)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Untuk menjalankan seluruh unit test menggunakan Vitest:
+```bash
+npm run test
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Dokumentasi Pembaruan Hari Ini (15 Juni 2026)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Hari ini telah dilakukan serangkaian perbaikan bug, optimalisasi responsivitas mobile, peningkatan keamanan, serta penambahan fitur sebagai berikut:
+
+### 1. Migrasi Asinkron Next.js 15+ (Params Resolution)
+* Mengubah parameter rute `params` dan `searchParams` di seluruh Server Components dan API Route Handlers menjadi bertipe `Promise` dan mengimplementasikan `await`. Ini mengatasi galat `PrismaClientValidationError` saat memuat halaman detail artikel.
+* Menghapus file `src/app/page.tsx` root yang redundant agar homepage dapat merujuk langsung ke `src/app/(public)/page.tsx` dan memuat header serta footer portal secara default.
+
+### 2. Optimalisasi Responsivitas Mobile
+* **Horizontal Overflow**: Menghilangkan luapan horizontal pada gambar featured hero di perangkat seluler dengan mengatur `aspect-ratio` responsif dan menonaktifkan batasan tinggi minimum desktop.
+* **Grid Kategori**: Menyusun navigasi kategori agar vertikal bertumpuk di layar ponsel kecil (`grid-cols-1`) dan melebar secara cerdas pada layar tablet/desktop.
+* **Mobile Sub-Navigation**: Menyematkan bilah navigasi horizontal scrollable khusus mobile di bawah header utama untuk memudahkan perpindahan kanal berita.
+
+### 3. Peningkatan Keamanan & Desain Sistem
+* **Sembunyikan Akses Login**: Menghapus tombol masuk ("Masuk" / "Dashboard") dari header halaman utama. Login portal sekarang bersifat privat dan hanya dapat diakses melalui URL `/login`.
+* **Fix React Key Warning**: Menyertakan select field `id` pada pemanggilan database relasi kategori di tabel manajemen admin (`ArticleTable.tsx`) dan halaman detail artikel untuk menjamin React key prop yang unik.
+
+### 4. Fitur Sorot/Highlight Berita Utama
+* Memodifikasi Prisma schema untuk menyertakan field boolean `isFeatured` pada model `Article`.
+* Mengintegrasikan checkbox "Sorot Berita" pada formulir pembuatan/edit artikel di Admin Panel.
+* Menyematkan fitur *auto-reset* pada endpoint backend agar sistem otomatis mematikan status sorotan artikel lama ketika artikel baru disorot.
+* Memperbarui homepage utama agar memprioritaskan artikel tersorot di bagian Hero Section dengan mekanisme filter pencegahan duplikasi artikel di daftar grid bawahnya.

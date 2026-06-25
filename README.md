@@ -31,7 +31,7 @@ CAPTCHA_SECRET="your_captcha_hmac_secret_here"
 SPAM_KEYWORDS="badword1,badword2,spammytext"
 ```
 
-### 3. Instalasi & Migrasi Database
+### 3. Instalasi & Migrasi Database (Lokal)
 ```bash
 # Instal dependensi
 npm install
@@ -51,6 +51,98 @@ npm run dev
 Buka [http://localhost:3000](http://localhost:3000) untuk mengakses portal publik. Untuk login admin, buka tautan langsung ke `/login` menggunakan akun:
 * **Email**: `admin@terbitkata.com`
 * **Password**: `AdminTerbitKata2026!`
+
+### 5. Deployment ke VPS (Produksi)
+Untuk meluncurkan aplikasi ini di server produksi (VPS), ikuti langkah-langkah berikut:
+
+1. **Persiapan Environment (`.env`)**
+   Sesuaikan environment variable untuk produksi:
+   ```env
+   DATABASE_URL="postgresql://user:password@localhost:5432/terbitkata_db?schema=public"
+   NEXTAUTH_URL="https://domain-anda.com"
+   NEXTAUTH_SECRET="buat-random-string-secure" # Gunakan 'openssl rand -base64 32'
+   ```
+
+2. **Perintah Deploy**
+   ```bash
+   # 1. Install dependencies
+   npm ci --production
+
+   # 2. Generate Prisma Client
+   npx prisma generate
+
+   # 3. Jalankan migrasi database ke database produksi
+   npx prisma migrate deploy
+
+   # 4. Build aplikasi untuk versi produksi
+   npm run build
+
+   # 5. Jalankan server menggunakan PM2 agar tetap berjalan di latar belakang
+   pm2 start npm --name "terbitkata-app" -- start
+   ```
+
+3. **Nginx Reverse Proxy**
+   Konfigurasikan Nginx untuk mengarahkan port 80/443 ke port 3000:
+   ```nginx
+   server {
+       listen 80;
+       server_name domain-anda.com;
+
+       location / {
+           proxy_pass http://localhost:3000;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   ```
+
+4. **Deployment Menggunakan Portainer Community Edition**
+   Anda dapat menjalankan aplikasi ini secara online secara lokal atau di VPS menggunakan Portainer CE melalui fitur **Stacks** (Docker Compose):
+
+   #### Opsi A: Menggunakan Git Repository (Sangat Direkomendasikan)
+   Metode ini akan secara otomatis mengkloning repository, mem-build Dockerfile, dan menjalankan container secara otomatis.
+   1. Buka Portainer CE -> Pilih Environment -> **Stacks** -> klik **Add stack**.
+   2. Beri nama stack (misal: `neo-terbitkata`).
+   3. Pada bagian **Build method**, pilih **Repository**.
+   4. Isi **Repository URL** dengan Git URL proyek Anda (misal: `https://github.com/FuzeHere/Neo-TerbitKata_Project.git`). *Jika repositori bersifat privat, aktifkan opsi Authentication dan masukkan Username serta Personal Access Token (PAT) GitHub Anda.*
+   5. Tentukan **Repository reference** (misal `refs/heads/main`).
+   6. Isi **Compose path** dengan `docker-compose.prod.yml`.
+   7. Tambahkan beberapa **Environment variables** berikut pada Portainer:
+      - `DATABASE_URL`: `postgresql://postgres:password@db:5432/terbitkata?schema=public`
+      - `NEXTAUTH_SECRET`: `string-random-rahasia-anda`
+      - `NEXTAUTH_URL`: `http://<IP_KOMPUTER_ATAU_DOMAIN>` (Gunakan IP komputer Anda agar bisa diakses oleh perangkat lain di jaringan lokal)
+   8. Klik **Deploy the stack**. Portainer akan mengunduh dan membangun aplikasi.
+
+   #### Opsi B: Menggunakan Web Editor (Deployment Manual Tanpa Git)
+   Jika Anda ingin mem-deploy langsung tanpa mendorong (push) kode ke Git terlebih dahulu:
+   1. Di terminal komputer host Docker Anda, lakukan build image terlebih dahulu:
+      ```bash
+      docker build -t terbitkata-app:latest .
+      ```
+   2. Buka Portainer CE -> **Stacks** -> klik **Add stack**.
+   3. Pilih **Web editor**, kemudian salin isi dari `docker-compose.prod.yml`. Sesuaikan baris berikut:
+      - Ubah blok `build: ...` pada service `app` menjadi `image: terbitkata-app:latest`.
+      - Ubah path volume nginx `./nginx/nginx.conf` menjadi path absolut pada server host (misal: `/absolute/path/to/Neo-TerbitKata_Project/nginx/nginx.conf`).
+   4. Tambahkan Environment variables seperti pada Opsi A.
+   5. Klik **Deploy the stack**.
+
+   #### Langkah Penting: Inisialisasi Database (Prisma db push & seed)
+   Karena database PostgreSQL yang baru di-deploy masih kosong, jalankan perintah migrasi skema dan pengisian data bawaan (seeding) melalui komputer host Anda (di mana direktori proyek berada) dengan mengarahkan koneksi ke port database container:
+   - **Di Windows (PowerShell):**
+     ```powershell
+     $env:DATABASE_URL="postgresql://postgres:password@localhost:5432/terbitkata?schema=public"
+     npx prisma db push
+     npx prisma db seed
+     Remove-Item Env:\DATABASE_URL
+     ```
+   - **Di Linux / macOS (Bash):**
+     ```bash
+     DATABASE_URL="postgresql://postgres:password@localhost:5432/terbitkata?schema=public" npx prisma db push
+     DATABASE_URL="postgresql://postgres:password@localhost:5432/terbitkata?schema=public" npx prisma db seed
+     ```
 
 ---
 

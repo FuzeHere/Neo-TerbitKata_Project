@@ -48,9 +48,9 @@ export default async function AdminLayout({
         <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hidden md:flex flex-col">
           {/* Logo */}
           <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
-            <Link href="/admin" className="flex items-center gap-2 font-bold text-xl text-primary">
-              <span className="bg-primary text-white p-1.5 rounded-lg">TK</span>
-              <span>TerbitKata <span className="text-xs text-muted-foreground font-normal">CMS</span></span>
+            <Link href="/admin" className="flex items-center gap-2">
+              <img src="/logo.png" alt="TerbitKata Logo" className="h-8 w-auto object-contain" />
+              <span className="text-xs text-muted-foreground font-semibold">CMS</span>
             </Link>
           </div>
 
@@ -109,9 +109,8 @@ export default async function AdminLayout({
           {/* Header (Mobile menu trigger + Title) */}
           <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-6">
             <div className="flex items-center md:hidden gap-3">
-              <Link href="/admin" className="font-bold text-lg text-primary flex items-center gap-1">
-                <span className="bg-primary text-white px-1.5 py-0.5 rounded text-sm">TK</span>
-                <span>TerbitKata</span>
+              <Link href="/admin" className="flex items-center">
+                <img src="/logo.png" alt="TerbitKata Logo" className="h-8 w-auto object-contain" />
               </Link>
             </div>
             

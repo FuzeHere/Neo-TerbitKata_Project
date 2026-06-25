@@ -45,7 +45,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Search Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-6 space-y-2">
+      <div className="border-b border-border pb-6 space-y-2">
         <div className="text-xs text-slate-500 font-medium capitalize">
           <Link href="/" className="hover:text-primary transition">Home</Link>
           <span className="mx-1.5">/</span>
@@ -70,10 +70,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           {articles.map((article) => (
             <article 
               key={article.id}
-              className="flex flex-col justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-md transition"
+              className="flex flex-col justify-between p-4 rounded-xl border border-border bg-card hover:shadow-md transition"
             >
               <div className="space-y-3">
-                <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-slate-105 dark:border-slate-800">
+                <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border">
                   <img 
                     src={article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80"} 
                     alt={article.title}
@@ -95,7 +95,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 </p>
               </div>
 
-              <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-4 text-[10px] text-slate-500">
+              <div className="flex items-center justify-between border-t border-border pt-4 mt-4 text-[10px] text-muted-foreground">
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{article.author.name}</span>
                 <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {formatDate(article.publishedAt!)}</span>
               </div>

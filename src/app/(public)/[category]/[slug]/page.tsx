@@ -90,7 +90,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
               "name": "TerbitKata",
               "logo": {
                 "@type": "ImageObject",
-                "url": `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/favicon.ico`
+                "url": `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/logo.png`
               }
             },
             "description": article.excerpt
@@ -127,12 +127,12 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
           {article.title}
         </h1>
 
-        <p className="text-slate-550 dark:text-slate-405 text-base sm:text-lg leading-relaxed italic border-l-4 border-slate-300 dark:border-slate-700 pl-4 py-1">
+        <p className="text-muted-foreground text-base sm:text-lg leading-relaxed italic border-l-4 border-border pl-4 py-1">
           {article.excerpt}
         </p>
 
         {/* Author Metadata */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-y border-slate-100 dark:border-slate-800/80 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-y border-border py-4">
           <div className="flex items-center gap-3">
             <img 
               src={article.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"} 
@@ -154,7 +154,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
       {/* Featured Image */}
       {article.thumbnail && (
-        <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100">
+        <div className="aspect-video w-full rounded-2xl overflow-hidden border border-border bg-muted">
           <img src={article.thumbnail} alt={article.title} className="object-cover w-full h-full" />
         </div>
       )}
@@ -167,13 +167,13 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
       {/* Tags list */}
       {article.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-6 border-t border-slate-250 dark:border-slate-800">
+        <div className="flex flex-wrap gap-2 pt-6 border-t border-border">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">Tag:</span>
           {article.tags.map((tag) => (
             <Link 
               key={tag.id} 
               href={`/tag/${tag.slug}`}
-              className="text-xs font-medium px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-primary dark:hover:border-primary transition"
+              className="text-xs font-medium px-3 py-1 rounded-lg border border-border hover:border-primary dark:hover:border-primary transition"
             >
               #{tag.name}
             </Link>

@@ -26,6 +26,11 @@ services:
       NEXTAUTH_URL: http://localhost
     depends_on:
       - db
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
 
   nginx:
     build:

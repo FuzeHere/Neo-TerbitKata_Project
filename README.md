@@ -99,49 +99,67 @@ Untuk meluncurkan aplikasi ini di server produksi (VPS), ikuti langkah-langkah b
    }
    ```
 
-4. **Deployment Menggunakan Portainer Community Edition**
-   Anda dapat menjalankan aplikasi ini secara online secara lokal atau di VPS menggunakan Portainer CE melalui fitur **Stacks** (Docker Compose):
+4. **Deployment Menggunakan Portainer Community Edition (Portainer CE)**
+   Berikut adalah panduan lengkap mulai dari instalasi Portainer CE hingga menjalankan aplikasi TerbitKata dengan pembatasan resource (limit: 2 CPU dan 4GB RAM).
 
-   #### Opsi A: Menggunakan Git Repository (Sangat Direkomendasikan)
-   Metode ini akan secara otomatis mengkloning repository, mem-build Dockerfile, dan menjalankan container secara otomatis.
+   #### Langkah 1: Instalasi & Menjalankan Portainer CE (Jika belum ada)
+   Jalankan perintah ini di Docker host Anda (Linux, macOS, atau Windows WSL) untuk menginstal dan menjalankan Portainer CE:
+   ```bash
+   # 1. Buat volume untuk penyimpanan data Portainer
+   docker volume create portainer_data
+
+   # 2. Jalankan container Portainer CE
+   docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+   ```
+   *Setelah terinstal, akses Portainer melalui browser di `https://localhost:9443` (atau IP host Anda).*
+
+   #### Langkah 2: Mengonfigurasi Limit Resource (2 CPU & 4GB RAM)
+   Berkas `docker-compose.prod.yml` sudah dilengkapi dengan batasan resource untuk container aplikasi (`app`) agar tidak memakan seluruh kapasitas server. Konfigurasi ini secara otomatis dibaca oleh Portainer:
+   ```yaml
+       deploy:
+         resources:
+           limits:
+             cpus: '2.0'
+             memory: 4G
+   ```
+
+   #### Langkah 3: Membuat & Menjalankan Stack di Portainer
    1. Buka Portainer CE -> Pilih Environment -> **Stacks** -> klik **Add stack**.
    2. Beri nama stack (misal: `neo-terbitkata`).
-   3. Pada bagian **Build method**, pilih **Repository**.
-   4. Isi **Repository URL** dengan Git URL proyek Anda (misal: `https://github.com/FuzeHere/Neo-TerbitKata_Project.git`). *Jika repositori bersifat privat, aktifkan opsi Authentication dan masukkan Username serta Personal Access Token (PAT) GitHub Anda.*
-   5. Tentukan **Repository reference** (misal `refs/heads/main`).
-   6. Isi **Compose path** dengan `docker-compose.prod.yml`.
-   7. Tambahkan beberapa **Environment variables** berikut pada Portainer:
+   3. **Metode Deployment**:
+      * **Opsi A: Menggunakan Git Repository (Sangat Direkomendasikan)**
+        * Pada **Build method**, pilih **Repository**.
+        * Isi **Repository URL** dengan Git URL proyek Anda (misal: `https://github.com/FuzeHere/Neo-TerbitKata_Project.git`). *Aktifkan Authentication jika repo privat.*
+        * Tentukan **Repository reference** (misal `refs/heads/main`).
+        * Isi **Compose path** dengan `docker-compose.prod.yml`.
+      * **Opsi B: Menggunakan Web Editor**
+        * Di terminal host lokal Anda, build image terlebih dahulu: `docker compose -f docker-compose.prod.yml build`
+        * Pada Portainer, pilih **Web editor**, kemudian salin isi dari `docker-compose.prod.yml`.
+   4. Tambahkan **Environment variables** berikut pada Portainer:
       - `DATABASE_URL`: `postgresql://postgres:password@db:5432/terbitkata?schema=public`
       - `NEXTAUTH_SECRET`: `string-random-rahasia-anda`
-      - `NEXTAUTH_URL`: `http://<IP_KOMPUTER_ATAU_DOMAIN>` (Gunakan IP komputer Anda agar bisa diakses oleh perangkat lain di jaringan lokal)
-   8. Klik **Deploy the stack**. Portainer akan mengunduh dan membangun aplikasi.
+      - `NEXTAUTH_URL`: `http://<IP_KOMPUTER_ATAU_DOMAIN>` (Gunakan IP komputer/VPS Anda agar bisa diakses oleh perangkat lain)
+   5. Klik **Deploy the stack**. Portainer akan melakukan build dan menjalankan kontainer secara terisolasi dengan batas 2 CPU & 4GB RAM.
 
-   #### Opsi B: Menggunakan Web Editor (Deployment Manual Tanpa Git)
-   Jika Anda ingin mem-deploy langsung tanpa mendorong (push) kode ke Git terlebih dahulu:
-   1. Di terminal komputer host Docker Anda, lakukan build image terlebih dahulu:
-      ```bash
-      docker build -t terbitkata-app:latest .
-      ```
-   2. Buka Portainer CE -> **Stacks** -> klik **Add stack**.
-   3. Pilih **Web editor**, kemudian salin isi dari `docker-compose.prod.yml`. Sesuaikan baris berikut:
-      - Ubah blok `build: ...` pada service `app` menjadi `image: terbitkata-app:latest`.
-      - Ubah path volume nginx `./nginx/nginx.conf` menjadi path absolut pada server host (misal: `/absolute/path/to/Neo-TerbitKata_Project/nginx/nginx.conf`).
-   4. Tambahkan Environment variables seperti pada Opsi A.
-   5. Klik **Deploy the stack**.
-
-   #### Langkah Penting: Inisialisasi Database (Prisma db push & seed)
-   Karena database PostgreSQL yang baru di-deploy masih kosong, jalankan perintah migrasi skema dan pengisian data bawaan (seeding) melalui komputer host Anda (di mana direktori proyek berada) dengan mengarahkan koneksi ke port database container:
-   - **Di Windows (PowerShell):**
+   #### Langkah 4: Inisialisasi Database (Prisma db push & seed)
+   Karena PostgreSQL di-deploy baru, jalankan perintah migrasi skema dan pengisian data bawaan (seeding) dari terminal komputer lokal Anda (arahkan koneksi ke port `5433` yang diekspos oleh compose untuk menghindari konflik dengan port local postgres `5432`):
+   * **Di Windows CMD:**
+     ```cmd
+     set DATABASE_URL=postgresql://postgres:password@localhost:5433/terbitkata?schema=public
+     npx prisma db push
+     npx prisma db seed
+     ```
+   * **Di Windows PowerShell:**
      ```powershell
-     $env:DATABASE_URL="postgresql://postgres:password@localhost:5432/terbitkata?schema=public"
+     $env:DATABASE_URL="postgresql://postgres:password@localhost:5433/terbitkata?schema=public"
      npx prisma db push
      npx prisma db seed
      Remove-Item Env:\DATABASE_URL
      ```
-   - **Di Linux / macOS (Bash):**
+   * **Di Linux / macOS / WSL (Bash):**
      ```bash
-     DATABASE_URL="postgresql://postgres:password@localhost:5432/terbitkata?schema=public" npx prisma db push
-     DATABASE_URL="postgresql://postgres:password@localhost:5432/terbitkata?schema=public" npx prisma db seed
+     DATABASE_URL="postgresql://postgres:password@localhost:5433/terbitkata?schema=public" npx prisma db push
+     DATABASE_URL="postgresql://postgres:password@localhost:5433/terbitkata?schema=public" npx prisma db seed
      ```
 
 ---

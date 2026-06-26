@@ -93,6 +93,13 @@ export default async function AdminLayout({
 
             <div className="flex flex-col gap-1">
               <Link
+                href="/admin/profile"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition"
+              >
+                <UserIcon className="h-3.5 w-3.5" />
+                Pengaturan Profil
+              </Link>
+              <Link
                 href="/"
                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition"
               >

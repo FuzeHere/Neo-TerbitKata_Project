@@ -182,7 +182,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       )}
 
       {/* Comments Section */}
-      <CommentSection articleId={article.id} initialComments={serializedComments} />
+      <CommentSection articleId={article.id} initialComments={serializedComments} authorName={article.author.name} />
     </article>
   </>
   );

@@ -24,7 +24,7 @@ export default function HeaderSearch() {
         placeholder="Cari berita..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="pl-9 pr-3 h-9 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-xs rounded-full focus-visible:ring-primary focus-visible:border-primary"
+        className="pl-9 pr-3 h-9 bg-white dark:bg-white border-slate-200 dark:border-slate-800 text-xs rounded-full focus-visible:ring-primary focus-visible:border-primary"
       />
     </form>
   );

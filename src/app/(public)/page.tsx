@@ -76,8 +76,8 @@ export default async function Homepage() {
       <section className="relative rounded-2xl overflow-hidden border border-border bg-card shadow-md">
         <div className="grid md:grid-cols-2 gap-0">
           <div className="relative aspect-video md:aspect-auto w-full md:h-full md:min-h-[400px]">
-            <img 
-              src={heroArticle.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80"} 
+            <img
+              src={heroArticle.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80"}
               alt={heroArticle.title}
               className="object-cover w-full h-full"
             />
@@ -90,7 +90,7 @@ export default async function Homepage() {
           <div className="p-6 md:p-10 flex flex-col justify-between space-y-6">
             <div className="space-y-4">
               <span className="text-xs text-primary font-bold tracking-widest uppercase">Pilihan Utama</span>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white hover:text-primary transition leading-tight">
+              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 hover:text-primary transition leading-tight">
                 <Link href={`/${heroArticle.categories[0]?.slug || "berita"}/${heroArticle.slug}`}>
                   {heroArticle.title}
                 </Link>
@@ -102,8 +102,8 @@ export default async function Homepage() {
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border pt-6">
               <div className="flex items-center gap-3">
-                <img 
-                  src={heroArticle.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"} 
+                <img
+                  src={heroArticle.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"}
                   alt={heroArticle.author.name}
                   className="h-10 w-10 rounded-full border border-slate-200 object-cover"
                 />
@@ -115,7 +115,7 @@ export default async function Homepage() {
                 </div>
               </div>
 
-              <Link 
+              <Link
                 href={`/${heroArticle.categories[0]?.slug || "berita"}/${heroArticle.slug}`}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline self-start sm:self-auto"
               >
@@ -129,8 +129,8 @@ export default async function Homepage() {
       {/* Categories Bar */}
       <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {categories.map((cat) => (
-          <Link 
-            key={cat.id} 
+          <Link
+            key={cat.id}
             href={`/kategori/${cat.slug}`}
             className="p-4 rounded-xl border border-border bg-card flex items-center justify-between hover:border-primary dark:hover:border-primary transition"
           >
@@ -153,14 +153,14 @@ export default async function Homepage() {
 
           <div className="grid sm:grid-cols-2 gap-6">
             {gridArticles.map((article) => (
-              <article 
+              <article
                 key={article.id}
                 className="flex flex-col justify-between p-4 rounded-xl border border-border bg-card hover:shadow-md transition"
               >
                 <div className="space-y-3">
                   <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
-                    <img 
-                      src={article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80"} 
+                    <img
+                      src={article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80"}
                       alt={article.title}
                       className="object-cover w-full h-full"
                     />
@@ -170,7 +170,7 @@ export default async function Homepage() {
                       </span>
                     )}
                   </div>
-                  <h4 className="font-bold text-base text-slate-900 dark:text-white hover:text-primary transition line-clamp-2 leading-snug">
+                  <h4 className="font-bold text-base text-slate-900 hover:text-primary transition line-clamp-2 leading-snug">
                     <Link href={`/${article.categories[0]?.slug || "berita"}/${article.slug}`}>
                       {article.title}
                     </Link>

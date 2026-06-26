@@ -48,39 +48,63 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { articleId, name, email, content, captchaAnswer, captchaToken } = await req.json();
+    const session = await getServerSession(authOptions);
+    const { articleId, name, email, content, captchaAnswer, captchaToken, parentId, isFromAdmin } = await req.json();
 
-    if (!articleId || !name || !email || !content || !captchaAnswer || !captchaToken) {
-      return NextResponse.json({ error: "Semua kolom input wajib diisi" }, { status: 400 });
+    let commenterName = name;
+    let commenterEmail = email;
+    let autoApprove = false;
+
+    if (isFromAdmin) {
+      // Must be authenticated to post as admin
+      if (!session || !session.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      commenterName = session.user.name || "Admin";
+      commenterEmail = session.user.email || "admin@terbitkata.com";
+      autoApprove = true;
+
+      if (!articleId || !content) {
+        return NextResponse.json({ error: "Semua kolom input wajib diisi" }, { status: 400 });
+      }
+    } else {
+      // Public comment flow - ALWAYS verify captcha
+      if (!articleId || !name || !email || !content || !captchaAnswer || !captchaToken) {
+        return NextResponse.json({ error: "Semua kolom input wajib diisi" }, { status: 400 });
+      }
+
+      // Verify Math CAPTCHA
+      const isCaptchaValid = verifyCaptcha(captchaAnswer, captchaToken, config.nextAuthSecret);
+      if (!isCaptchaValid) {
+        return NextResponse.json({ error: "Jawaban CAPTCHA salah" }, { status: 400 });
+      }
     }
 
-    // 1. Verify Math CAPTCHA
-    const isCaptchaValid = verifyCaptcha(captchaAnswer, captchaToken, config.nextAuthSecret);
-    if (!isCaptchaValid) {
-      return NextResponse.json({ error: "Jawaban CAPTCHA salah" }, { status: 400 });
-    }
+    // Dynamic spam filtering for public comments
+    const isSpamComment = autoApprove ? false : isSpam(content, config.spamKeywords);
 
-    // 2. Dynamic spam filtering (check links or blacklist keywords)
-    const isSpamComment = isSpam(content, config.spamKeywords);
-
-    // Create comment - if spam, mark as REJECTED directly, otherwise PENDING
+    // Create comment
     const comment = await db.comment.create({
       data: {
         articleId,
-        name,
-        email,
+        name: commenterName,
+        email: commenterEmail,
         content,
-        status: isSpamComment ? "REJECTED" : "PENDING"
+        parentId: parentId || null,
+        status: autoApprove ? "APPROVED" : (isSpamComment ? "REJECTED" : "PENDING")
       }
     });
 
     return NextResponse.json({
       comment,
-      message: isSpamComment
-        ? "Komentar terdeteksi spam dan otomatis ditolak."
-        : "Komentar berhasil dikirim dan menunggu moderasi admin."
+      message: autoApprove
+        ? "Komentar balasan berhasil dipublikasikan."
+        : (isSpamComment
+            ? "Komentar terdeteksi spam dan otomatis ditolak."
+            : "Komentar berhasil dikirim dan menunggu moderasi admin.")
     });
   } catch (error) {
+    console.error("Gagal mengirim komentar:", error);
     return NextResponse.json({ error: "Gagal mengirim komentar" }, { status: 500 });
   }
 }

@@ -8,7 +8,8 @@ export default async function AdminCommentsPage() {
   const comments = await db.comment.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      article: { select: { title: true, slug: true } }
+      article: { select: { title: true, slug: true } },
+      parent: { select: { name: true } }
     }
   });
 

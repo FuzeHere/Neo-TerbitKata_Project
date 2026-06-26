@@ -43,7 +43,7 @@ export default function NewsletterForm() {
         placeholder="Email Anda..."
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="h-9 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-xs rounded-lg flex-1"
+        className="h-9 bg-white dark:bg-white border-slate-200 dark:border-slate-800 text-xs rounded-lg flex-1"
       />
       <Button
         type="submit"

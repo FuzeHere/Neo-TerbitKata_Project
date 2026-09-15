@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
+import { z } from "zod";
+
+const createTagSchema = z.object({
+  name: z.string().trim().min(2, "Nama tag minimal 2 karakter").max(50, "Nama tag maksimal 50 karakter"),
+});
 
 export async function GET() {
   try {
@@ -27,11 +32,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name } = await req.json();
-    if (!name) {
-      return NextResponse.json({ error: "Nama tag harus diisi" }, { status: 400 });
+    const body = await req.json();
+    const parsed = createTagSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Nama tag tidak valid" },
+        { status: 400 }
+      );
     }
 
+    const { name } = parsed.data;
     const slug = slugify(name);
     const existing = await db.tag.findUnique({ where: { slug } });
     if (existing) {

@@ -3,6 +3,12 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
+import { z } from "zod";
+
+const updateCategorySchema = z.object({
+  name: z.string().trim().min(2, "Nama kategori minimal 2 karakter").max(50, "Nama kategori maksimal 50 karakter"),
+  description: z.string().trim().max(255, "Deskripsi maksimal 255 karakter").optional().nullable(),
+});
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -15,15 +21,24 @@ export async function PUT(
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session || (session.user as any).role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden: Hanya Super Admin yang dapat mengubah kategori" },
+        { status: 403 }
+      );
     }
 
-    const { name, description } = await req.json();
-    if (!name) {
-      return NextResponse.json({ error: "Nama kategori harus diisi" }, { status: 400 });
+    const body = await req.json();
+    const parsed = updateCategorySchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Data input tidak valid" },
+        { status: 400 }
+      );
     }
 
+    const { name, description } = parsed.data;
     const slug = slugify(name);
     
     // Check if slug is taken by another category
@@ -40,7 +55,7 @@ export async function PUT(
 
     const category = await db.category.update({
       where: { id },
-      data: { name, slug, description }
+      data: { name, slug, description: description || null }
     });
 
     return NextResponse.json(category);
@@ -56,8 +71,11 @@ export async function DELETE(
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session || (session.user as any).role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden: Hanya Super Admin yang dapat menghapus kategori" },
+        { status: 403 }
+      );
     }
 
     // Check if category is used in any article

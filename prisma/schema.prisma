@@ -36,6 +36,7 @@ model Article {
   author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   publishedAt DateTime?  @map("published_at")
   isFeatured  Boolean    @default(false) @map("is_featured")
+  views       Int        @default(0)
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
   categories  Category[]

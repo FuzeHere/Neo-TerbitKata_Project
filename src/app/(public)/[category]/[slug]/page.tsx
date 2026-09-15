@@ -2,9 +2,11 @@ import React from "react";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { formatDate, calculateReadingTime } from "@/lib/utils";
-import { Clock, User, Calendar, BookOpen } from "lucide-react";
+import { sanitizeHtml } from "@/lib/sanitize";
+import { Clock, User, Calendar, BookOpen, Eye } from "lucide-react";
 import CommentSection from "@/components/public/CommentSection";
 import ShareButtons from "@/components/public/ShareButtons";
+import ArticleViewTracker from "@/components/public/ArticleViewTracker";
 import { Metadata } from "next";
 import Link from "next/link";
 
@@ -69,6 +71,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
   return (
     <>
+      <ArticleViewTracker articleId={article.id} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -144,6 +147,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
               <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {formatDate(article.publishedAt)}</span>
                 <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {readingTime} Menit Baca</span>
+                <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {article.views ?? 0} Kali Dibaca</span>
               </div>
             </div>
           </div>
@@ -162,7 +166,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       {/* Article Content */}
       <div 
         className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 text-base sm:text-lg leading-relaxed space-y-6"
-        dangerouslySetInnerHTML={{ __html: article.content }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }}
       />
 
       {/* Tags list */}

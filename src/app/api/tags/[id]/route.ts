@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
+import { z } from "zod";
+
+const updateTagSchema = z.object({
+  name: z.string().trim().min(2, "Nama tag minimal 2 karakter").max(50, "Nama tag maksimal 50 karakter"),
+});
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -19,11 +24,17 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name } = await req.json();
-    if (!name) {
-      return NextResponse.json({ error: "Nama tag harus diisi" }, { status: 400 });
+    const body = await req.json();
+    const parsed = updateTagSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Nama tag tidak valid" },
+        { status: 400 }
+      );
     }
 
+    const { name } = parsed.data;
     const slug = slugify(name);
     
     // Check if slug is taken by another tag
@@ -56,8 +67,11 @@ export async function DELETE(
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session || (session.user as any).role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden: Hanya Super Admin yang dapat menghapus tag" },
+        { status: 403 }
+      );
     }
 
     await db.tag.delete({ where: { id } });

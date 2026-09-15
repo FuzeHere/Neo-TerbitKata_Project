@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Edit, Trash2, ExternalLink, Calendar, User } from "lucide-react";
+import { Search, Edit, Trash2, ExternalLink, Calendar, User, Eye } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,13 +83,14 @@ export default function ArticleTable({ initialArticles }: ArticleTableProps) {
               <th className="py-3 px-5">Kategori</th>
               <th className="py-3 px-5">Tanggal</th>
               <th className="py-3 px-5">Status</th>
+              <th className="py-3 px-5">Dibaca</th>
               <th className="py-3 px-5 text-right">Aksi</th>
             </tr>
           </thead>
           <tbody>
             {filteredArticles.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-10 text-center text-slate-500">
+                <td colSpan={6} className="py-10 text-center text-slate-500">
                   Tidak ada artikel yang cocok dengan pencarian Anda.
                 </td>
               </tr>
@@ -139,6 +140,12 @@ export default function ArticleTable({ initialArticles }: ArticleTableProps) {
                     >
                       {article.publishedAt ? "Dipublikasikan" : "Draft"}
                     </span>
+                  </td>
+                  <td className="py-4 px-5 text-slate-600 dark:text-slate-400">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold">
+                      <Eye className="h-3.5 w-3.5 text-slate-400" />
+                      <span>{article.views ?? 0}</span>
+                    </div>
                   </td>
                   <td className="py-4 px-5 text-right">
                     <div className="flex items-center justify-end gap-1">

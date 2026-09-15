@@ -3,6 +3,18 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
+import { z } from "zod";
+
+const createArticleSchema = z.object({
+  title: z.string().trim().min(3, "Judul artikel minimal 3 karakter").max(200, "Judul artikel maksimal 200 karakter"),
+  excerpt: z.string().trim().max(500, "Ringkasan maksimal 500 karakter").optional().nullable(),
+  content: z.string().trim().min(10, "Isi artikel minimal 10 karakter"),
+  thumbnail: z.string().trim().optional().nullable(),
+  categoryIds: z.array(z.string()).optional(),
+  tagIds: z.array(z.string()).optional(),
+  isPublished: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+});
 
 export async function GET(req: Request) {
   try {
@@ -89,6 +101,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const body = await req.json();
+    const parsed = createArticleSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Data artikel tidak valid" },
+        { status: 400 }
+      );
+    }
+
     const {
       title,
       excerpt,
@@ -98,11 +120,7 @@ export async function POST(req: Request) {
       tagIds,
       isPublished,
       isFeatured
-    } = await req.json();
-
-    if (!title || !content) {
-      return NextResponse.json({ error: "Judul dan isi artikel harus diisi" }, { status: 400 });
-    }
+    } = parsed.data;
 
     const slug = slugify(title);
     

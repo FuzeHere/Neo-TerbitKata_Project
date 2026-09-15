@@ -5,6 +5,18 @@ import { db } from "@/lib/db";
 import { isSpam } from "@/lib/utils";
 import { verifyCaptcha } from "@/lib/captcha";
 import { config } from "@/lib/config";
+import { z } from "zod";
+
+const commentInputSchema = z.object({
+  articleId: z.string().min(1, "ID artikel wajib diisi"),
+  name: z.string().trim().min(1, "Nama wajib diisi").max(100, "Nama maksimal 100 karakter").optional(),
+  email: z.string().trim().email("Format email tidak valid").max(150).optional(),
+  content: z.string().trim().min(1, "Komentar wajib diisi").max(2000, "Komentar maksimal 2000 karakter"),
+  captchaAnswer: z.string().optional(),
+  captchaToken: z.string().optional(),
+  parentId: z.string().nullable().optional(),
+  isFromAdmin: z.boolean().optional(),
+});
 
 export async function GET(req: Request) {
   try {
@@ -49,10 +61,20 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const { articleId, name, email, content, captchaAnswer, captchaToken, parentId, isFromAdmin } = await req.json();
+    const body = await req.json();
+    const parsed = commentInputSchema.safeParse(body);
 
-    let commenterName = name;
-    let commenterEmail = email;
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Input tidak valid" },
+        { status: 400 }
+      );
+    }
+
+    const { articleId, name, email, content, captchaAnswer, captchaToken, parentId, isFromAdmin } = parsed.data;
+
+    let commenterName = name || "";
+    let commenterEmail = email || "";
     let autoApprove = false;
 
     if (isFromAdmin) {
@@ -63,14 +85,10 @@ export async function POST(req: Request) {
       commenterName = session.user.name || "Admin";
       commenterEmail = session.user.email || "admin@terbitkata.com";
       autoApprove = true;
-
-      if (!articleId || !content) {
-        return NextResponse.json({ error: "Semua kolom input wajib diisi" }, { status: 400 });
-      }
     } else {
-      // Public comment flow - ALWAYS verify captcha
-      if (!articleId || !name || !email || !content || !captchaAnswer || !captchaToken) {
-        return NextResponse.json({ error: "Semua kolom input wajib diisi" }, { status: 400 });
+      // Public comment flow - ALWAYS verify captcha, name, and email
+      if (!commenterName || !commenterEmail || !captchaAnswer || !captchaToken) {
+        return NextResponse.json({ error: "Semua kolom input dan CAPTCHA wajib diisi" }, { status: 400 });
       }
 
       // Verify Math CAPTCHA

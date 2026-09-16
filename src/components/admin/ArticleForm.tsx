@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, X, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 
 interface ArticleFormProps {
   categories: any[];
@@ -93,6 +94,13 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
       return;
     }
 
+    const cleanText = content.replace(/<[^>]*>/g, "").trim();
+    if (!content || cleanText.length < 10) {
+      setError("Isi artikel minimal 10 karakter.");
+      setSubmitting(false);
+      return;
+    }
+
     const payload = {
       title,
       excerpt: excerpt || title.substring(0, 150) + "...",
@@ -168,14 +176,18 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
 
             {/* Content Body */}
             <div className="space-y-2">
-              <Label htmlFor="content" className="font-semibold text-slate-700 dark:text-slate-360">Isi Artikel (Mendukung HTML)</Label>
-              <Textarea
-                id="content"
-                required
-                placeholder="Tulis isi berita Anda di sini. Anda dapat menggunakan tag HTML dasar seperti <p>, <blockquote>, <strong>, dll..."
+              <div className="flex items-center justify-between">
+                <Label htmlFor="content" className="font-semibold text-slate-700 dark:text-slate-300">
+                  Isi Artikel
+                </Label>
+                <span className="text-xs text-slate-400">
+                  WYSIWYG Editor (Mendukung Heading, List, Link &amp; Baca Juga)
+                </span>
+              </div>
+              <RichTextEditor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="min-h-[400px] font-mono text-sm bg-transparent border-slate-200 dark:border-slate-800 focus-visible:ring-primary"
+                onChange={setContent}
+                placeholder="Tulis isi berita Anda di sini. Gunakan toolbar untuk formatting dan menyisipkan tautan..."
               />
             </div>
           </CardContent>

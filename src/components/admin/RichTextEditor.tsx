@@ -29,7 +29,6 @@ import {
   Search,
   X,
   Loader2,
-  ExternalLink,
   BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -55,8 +54,15 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Tulis isi berita Anda di sini..."
 }: RichTextEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isHtmlMode, setIsHtmlMode] = useState(false);
   const [rawHtml, setRawHtml] = useState(value || "");
+
+  // Store selection range so modals don't lose the user's cursor/highlight position
+  const savedSelectionRef = useRef<{ from: number; to: number } | null>(null);
+
+  // Floating Selection (Bubble Menu) State
+  const [bubbleMenuPos, setBubbleMenuPos] = useState<{ top: number; left: number } | null>(null);
 
   // Link Modal State
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -102,14 +108,78 @@ export default function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "tiptap min-h-[360px] p-4 sm:p-6 focus:outline-none text-slate-800 dark:text-slate-200 text-base sm:text-lg leading-relaxed"
+          "tiptap min-h-[380px] p-4 sm:p-6 focus:outline-none text-slate-800 dark:text-slate-200 text-base sm:text-lg leading-relaxed"
       }
     }
   });
 
-  // Sync external value changes (e.g., when initial article data loads in edit mode)
+  // Calculate position for floating selection menu (Bubble Menu)
+  const updateBubbleMenu = useCallback(() => {
+    if (!editor || !containerRef.current || isHtmlMode) {
+      setBubbleMenuPos(null);
+      return;
+    }
+
+    const { from, to } = editor.state.selection;
+    if (from === to) {
+      setBubbleMenuPos(null);
+      return;
+    }
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      setBubbleMenuPos(null);
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+
+    if (rect.width === 0 || rect.height === 0) {
+      setBubbleMenuPos(null);
+      return;
+    }
+
+    // Determine vertical position: above selection if space permits, else below
+    let top = rect.top - containerRect.top - 50;
+    if (top < 52) {
+      top = rect.bottom - containerRect.top + 10;
+    }
+
+    // Keep horizontal position safely within container bounds
+    const halfMenuWidth = 150;
+    const maxLeft = containerRect.width - halfMenuWidth - 12;
+    const minLeft = halfMenuWidth + 12;
+    const centerSelection = rect.left - containerRect.left + rect.width / 2;
+    const left = Math.max(minLeft, Math.min(maxLeft, centerSelection));
+
+    setBubbleMenuPos({ top, left });
+  }, [editor, isHtmlMode]);
+
   useEffect(() => {
-    if (editor && value !== undefined && value !== editor.getHTML()) {
+    if (!editor) return;
+
+    editor.on("selectionUpdate", updateBubbleMenu);
+    editor.on("transaction", updateBubbleMenu);
+
+    const handleScrollOrResize = () => updateBubbleMenu();
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+
+    return () => {
+      editor.off("selectionUpdate", updateBubbleMenu);
+      editor.off("transaction", updateBubbleMenu);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
+  }, [editor, updateBubbleMenu]);
+
+  // Sync external value changes (e.g., initial article load in edit mode)
+  useEffect(() => {
+    if (!editor || value === undefined) return;
+    const currentHtml = editor.getHTML();
+    if (value !== currentHtml && (value !== "" || currentHtml !== "<p></p>")) {
       editor.commands.setContent(value, { emitUpdate: false });
       setRawHtml(value);
     }
@@ -118,17 +188,16 @@ export default function RichTextEditor({
   // Handle switching between Visual and HTML mode
   const handleToggleHtmlMode = () => {
     if (isHtmlMode) {
-      // Switching from HTML to Visual
       if (editor) {
         editor.commands.setContent(rawHtml, { emitUpdate: false });
       }
       onChange(rawHtml);
       setIsHtmlMode(false);
     } else {
-      // Switching from Visual to HTML
       if (editor) {
         setRawHtml(editor.getHTML());
       }
+      setBubbleMenuPos(null);
       setIsHtmlMode(true);
     }
   };
@@ -142,6 +211,10 @@ export default function RichTextEditor({
   // Standard Link Actions
   const openLinkModal = () => {
     if (!editor) return;
+    savedSelectionRef.current = {
+      from: editor.state.selection.from,
+      to: editor.state.selection.to
+    };
     const previousUrl = editor.getAttributes("link").href || "";
     const selectedText = editor.state.doc.textBetween(
       editor.state.selection.from,
@@ -155,6 +228,14 @@ export default function RichTextEditor({
 
   const saveLink = () => {
     if (!editor) return;
+
+    // Restore saved selection
+    if (savedSelectionRef.current) {
+      editor.chain().focus().setTextSelection(savedSelectionRef.current).run();
+    } else {
+      editor.chain().focus().run();
+    }
+
     if (!linkUrl.trim()) {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
     } else {
@@ -169,14 +250,18 @@ export default function RichTextEditor({
         editor.chain().focus().extendMarkRange("link").setLink({ href: finalUrl }).run();
       }
     }
+
     setIsLinkModalOpen(false);
     setLinkUrl("");
     setLinkText("");
+    setBubbleMenuPos(null);
+    savedSelectionRef.current = null;
   };
 
   const removeLink = () => {
     if (!editor) return;
     editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    setBubbleMenuPos(null);
   };
 
   // Internal Article Picker Actions
@@ -197,6 +282,11 @@ export default function RichTextEditor({
   }, []);
 
   const openArticleModal = () => {
+    if (!editor) return;
+    savedSelectionRef.current = {
+      from: editor.state.selection.from,
+      to: editor.state.selection.to
+    };
     setIsArticleModalOpen(true);
     setSearchQuery("");
     fetchArticles("");
@@ -216,15 +306,20 @@ export default function RichTextEditor({
   const insertArticleLink = (article: ArticleItem) => {
     if (!editor) return;
 
+    // Restore saved selection
+    if (savedSelectionRef.current) {
+      editor.chain().focus().setTextSelection(savedSelectionRef.current).run();
+    } else {
+      editor.chain().focus().run();
+    }
+
     const categorySlug = article.categories?.[0]?.slug || "berita";
     const articleUrl = `/${categorySlug}/${article.slug}`;
 
     if (insertFormat === "callout") {
-      // Modern Indonesian News Callout: "Baca Juga: [Judul Artikel]"
       const calloutHtml = `<p class="baca-juga-card"><strong>Baca Juga: </strong><a href="${articleUrl}" target="_blank" rel="noopener noreferrer">${article.title}</a></p><p></p>`;
       editor.chain().focus().insertContent(calloutHtml).run();
     } else {
-      // Inline text link
       const selectedText = editor.state.doc.textBetween(
         editor.state.selection.from,
         editor.state.selection.to,
@@ -239,6 +334,8 @@ export default function RichTextEditor({
     }
 
     setIsArticleModalOpen(false);
+    setBubbleMenuPos(null);
+    savedSelectionRef.current = null;
   };
 
   if (!editor) {
@@ -251,8 +348,171 @@ export default function RichTextEditor({
   }
 
   return (
-    <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-950 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-      {/* Sticky & Horizontally Scrollable Toolbar */}
+    <div
+      ref={containerRef}
+      className="relative border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-950 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+    >
+      {/* FLOATING SELECTION BUBBLE MENU (Appears above highlighted/selected text) */}
+      {bubbleMenuPos && !isHtmlMode && (
+        <div
+          style={{
+            top: `${bubbleMenuPos.top}px`,
+            left: `${bubbleMenuPos.left}px`,
+            transform: "translateX(-50%)"
+          }}
+          className="absolute z-30 flex items-center gap-1 p-1.5 bg-slate-900/95 dark:bg-slate-800/95 text-white backdrop-blur-md rounded-xl shadow-2xl border border-slate-700/80 animate-in fade-in zoom-in-95 duration-100 max-w-[calc(100vw-32px)] overflow-x-auto no-scrollbar whitespace-nowrap"
+        >
+          {/* Format Besar/Kecil Tulisan */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              editor.chain().focus().setParagraph().run();
+            }}
+            className={`px-2 py-1 rounded text-xs font-semibold transition cursor-pointer ${
+              editor.isActive("paragraph") && !editor.isActive("heading")
+                ? "bg-primary text-white"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+            title="Teks Normal"
+          >
+            P
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              editor.chain().focus().toggleHeading({ level: 1 }).run();
+            }}
+            className={`px-2 py-1 rounded text-xs font-bold transition cursor-pointer ${
+              editor.isActive("heading", { level: 1 })
+                ? "bg-primary text-white"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+            title="Heading 1 (Besar)"
+          >
+            H1
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              editor.chain().focus().toggleHeading({ level: 2 }).run();
+            }}
+            className={`px-2 py-1 rounded text-xs font-bold transition cursor-pointer ${
+              editor.isActive("heading", { level: 2 })
+                ? "bg-primary text-white"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+            title="Heading 2 (Sedang)"
+          >
+            H2
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              editor.chain().focus().toggleHeading({ level: 3 }).run();
+            }}
+            className={`px-2 py-1 rounded text-xs font-bold transition cursor-pointer ${
+              editor.isActive("heading", { level: 3 })
+                ? "bg-primary text-white"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+            title="Heading 3 (Kecil)"
+          >
+            H3
+          </button>
+
+          <div className="w-[1px] h-4 bg-slate-700 mx-0.5 shrink-0" />
+
+          {/* Bold */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              editor.chain().focus().toggleBold().run();
+            }}
+            className={`p-1.5 rounded shrink-0 transition cursor-pointer ${
+              editor.isActive("bold")
+                ? "bg-primary text-white"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+            title="Tebal (Bold)"
+          >
+            <Bold className="h-3.5 w-3.5" />
+          </button>
+
+          {/* Italic */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              editor.chain().focus().toggleItalic().run();
+            }}
+            className={`p-1.5 rounded shrink-0 transition cursor-pointer ${
+              editor.isActive("italic")
+                ? "bg-primary text-white"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+            title="Miring (Italic)"
+          >
+            <Italic className="h-3.5 w-3.5" />
+          </button>
+
+          {/* Underline */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              editor.chain().focus().toggleUnderline().run();
+            }}
+            className={`p-1.5 rounded shrink-0 transition cursor-pointer ${
+              editor.isActive("underline")
+                ? "bg-primary text-white"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+            title="Garis Bawah (Underline)"
+          >
+            <UnderlineIcon className="h-3.5 w-3.5" />
+          </button>
+
+          <div className="w-[1px] h-4 bg-slate-700 mx-0.5 shrink-0" />
+
+          {/* Link */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              openLinkModal();
+            }}
+            className={`p-1.5 rounded shrink-0 transition cursor-pointer ${
+              editor.isActive("link")
+                ? "bg-primary text-white"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }`}
+            title="Beri Tautan Link"
+          >
+            <LinkIcon className="h-3.5 w-3.5" />
+          </button>
+
+          {/* Tautkan Berita Terkait */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              openArticleModal();
+            }}
+            className="px-2 py-1 rounded text-xs font-semibold text-primary bg-primary/15 hover:bg-primary/25 transition cursor-pointer flex items-center gap-1 shrink-0"
+            title="Tautkan ke Postingan Web Ini"
+          >
+            <Newspaper className="h-3 w-3" />
+            <span className="text-[11px]">Tautkan Berita</span>
+          </button>
+        </div>
+      )}
+
+      {/* Main Top Sticky & Horizontally Scrollable Toolbar */}
       <div className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center justify-between gap-2 p-1.5 sm:p-2">
           {/* Main Editing Tools (Scrollable on mobile) */}
@@ -260,6 +520,7 @@ export default function RichTextEditor({
             {/* Heading Group */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().setParagraph().run()}
               className={`px-2.5 h-8 rounded-lg text-xs font-semibold shrink-0 transition cursor-pointer flex items-center gap-1 ${
                 editor.isActive("paragraph") && !editor.isActive("heading")
@@ -273,6 +534,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
               className={`px-2.5 h-8 rounded-lg text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1 ${
                 editor.isActive("heading", { level: 1 })
@@ -286,6 +548,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
               className={`px-2.5 h-8 rounded-lg text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1 ${
                 editor.isActive("heading", { level: 2 })
@@ -299,6 +562,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
               className={`px-2.5 h-8 rounded-lg text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1 ${
                 editor.isActive("heading", { level: 3 })
@@ -316,6 +580,7 @@ export default function RichTextEditor({
             {/* Inline Formatting */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleBold().run()}
               className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("bold")
@@ -328,6 +593,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleItalic().run()}
               className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("italic")
@@ -340,6 +606,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleUnderline().run()}
               className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("underline")
@@ -352,6 +619,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleStrike().run()}
               className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("strike")
@@ -368,6 +636,7 @@ export default function RichTextEditor({
             {/* Lists & Quotes */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleBulletList().run()}
               className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("bulletList")
@@ -380,6 +649,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
               className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("orderedList")
@@ -392,6 +662,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
               className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("blockquote")
@@ -404,6 +675,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().setHorizontalRule().run()}
               className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               title="Garis Pembatas (Horizontal Line)"
@@ -416,6 +688,7 @@ export default function RichTextEditor({
             {/* Standard Link */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={openLinkModal}
               className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("link")
@@ -429,6 +702,7 @@ export default function RichTextEditor({
             {editor.isActive("link") && (
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={removeLink}
                 className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
                 title="Hapus Link"
@@ -440,6 +714,7 @@ export default function RichTextEditor({
             {/* Internal Article Interlinker Button ("Baca Juga") */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={openArticleModal}
               className="px-2.5 h-8 rounded-lg shrink-0 flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition cursor-pointer border border-primary/20"
               title="Tautkan Berita Terkait ('Baca Juga')"
@@ -454,6 +729,7 @@ export default function RichTextEditor({
             {/* Undo / Redo */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().undo()}
               className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
@@ -463,6 +739,7 @@ export default function RichTextEditor({
             </button>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().redo().run()}
               disabled={!editor.can().redo()}
               className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
@@ -528,7 +805,7 @@ export default function RichTextEditor({
               <button
                 type="button"
                 onClick={() => setIsLinkModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -603,7 +880,7 @@ export default function RichTextEditor({
               <button
                 type="button"
                 onClick={() => setIsArticleModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>

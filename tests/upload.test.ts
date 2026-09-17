@@ -37,4 +37,38 @@ describe("Upload and Static Serving - Logic Verification", () => {
     expect(fs.existsSync(testFile)).toBe(true);
     fs.unlinkSync(testFile);
   });
+
+  it("should compress and convert images to webp using sharp", async () => {
+    const sharp = (await import("sharp")).default;
+    // Create a 100x100 test PNG image in memory
+    const testImageBuffer = await sharp({
+      create: {
+        width: 100,
+        height: 100,
+        channels: 3,
+        background: { r: 59, g: 130, b: 246 },
+      },
+    })
+      .png()
+      .toBuffer();
+
+    expect(testImageBuffer.length).toBeGreaterThan(0);
+
+    // Process image as upload route does
+    const processedBuffer = await sharp(testImageBuffer)
+      .rotate()
+      .resize({
+        width: 1600,
+        height: 1200,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 80, effort: 4 })
+      .toBuffer();
+
+    const metadata = await sharp(processedBuffer).metadata();
+    expect(metadata.format).toBe("webp");
+    expect(metadata.width).toBe(100);
+    expect(metadata.height).toBe(100);
+  });
 });

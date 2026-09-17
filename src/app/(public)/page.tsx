@@ -1,6 +1,7 @@
 import React from "react";
 import { db } from "@/lib/db";
 import Link from "next/link";
+import Image from "next/image";
 import { Clock, User, ArrowRight, MessageSquare } from "lucide-react";
 import { formatDate, calculateReadingTime } from "@/lib/utils";
 import { Metadata } from "next";
@@ -76,13 +77,16 @@ export default async function Homepage() {
       <section className="relative rounded-2xl overflow-hidden border border-border bg-card shadow-md">
         <div className="grid md:grid-cols-2 gap-0">
           <div className="relative aspect-video md:aspect-auto w-full md:h-full md:min-h-[400px]">
-            <img
+            <Image
               src={heroArticle.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80"}
               alt={heroArticle.title}
-              className="object-cover w-full h-full"
+              fill
+              preload
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
             />
             {heroArticle.categories[0] && (
-              <span className="absolute top-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+              <span className="absolute top-4 left-4 z-10 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                 {heroArticle.categories[0].name}
               </span>
             )}
@@ -102,9 +106,11 @@ export default async function Homepage() {
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border pt-6">
               <div className="flex items-center gap-3">
-                <img
+                <Image
                   src={heroArticle.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"}
                   alt={heroArticle.author.name}
+                  width={40}
+                  height={40}
                   className="h-10 w-10 rounded-full border border-slate-200 object-cover"
                 />
                 <div>
@@ -159,13 +165,15 @@ export default async function Homepage() {
               >
                 <div className="space-y-3">
                   <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
-                    <img
+                    <Image
                       src={article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80"}
                       alt={article.title}
-                      className="object-cover w-full h-full"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover"
                     />
                     {article.categories[0] && (
-                      <span className="absolute top-2 left-2 bg-primary text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      <span className="absolute top-2 left-2 z-10 bg-primary text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
                         {article.categories[0].name}
                       </span>
                     )}

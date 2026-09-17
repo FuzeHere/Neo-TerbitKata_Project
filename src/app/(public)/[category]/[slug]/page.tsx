@@ -9,6 +9,7 @@ import ShareButtons from "@/components/public/ShareButtons";
 import ArticleViewTracker from "@/components/public/ArticleViewTracker";
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 export const revalidate = 0;
 
@@ -137,9 +138,11 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
         {/* Author Metadata */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-y border-border py-4">
           <div className="flex items-center gap-3">
-            <img 
+            <Image 
               src={article.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"} 
               alt={article.author.name}
+              width={40}
+              height={40}
               className="h-10 w-10 rounded-full border border-slate-200 object-cover"
             />
             <div>
@@ -158,8 +161,15 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
       {/* Featured Image */}
       {article.thumbnail && (
-        <div className="aspect-video w-full rounded-2xl overflow-hidden border border-border bg-muted">
-          <img src={article.thumbnail} alt={article.title} className="object-cover w-full h-full" />
+        <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border bg-muted">
+          <Image
+            src={article.thumbnail}
+            alt={article.title}
+            fill
+            preload
+            sizes="(max-width: 1024px) 100vw, 896px"
+            className="object-cover"
+          />
         </div>
       )}
 

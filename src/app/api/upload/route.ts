@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { v2 as cloudinary } from "cloudinary";
+import sharp from "sharp";
 import fs from "fs";
 import path from "path";
 
@@ -76,6 +77,30 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // 4. Optimasi dan Kompresi Gambar Otomatis dengan Sharp
+    let processedBuffer: Buffer = buffer;
+    let finalExt = originalExt || ".jpg";
+
+    if (originalExt !== ".gif") {
+      try {
+        processedBuffer = await sharp(buffer)
+          .rotate() // Menyesuaikan orientasi foto kamera secara otomatis
+          .resize({
+            width: 1600,
+            height: 1200,
+            fit: "inside",
+            withoutEnlargement: true,
+          })
+          .webp({ quality: 80, effort: 4 })
+          .toBuffer();
+        finalExt = ".webp";
+      } catch (sharpError) {
+        console.warn("Optimasi sharp gagal, menggunakan buffer asli:", sharpError);
+        processedBuffer = buffer;
+        finalExt = originalExt || ".jpg";
+      }
+    }
+
     // Cek konfigurasi Cloudinary
     const isCloudinaryConfigured = Boolean(
       process.env.CLOUDINARY_CLOUD_NAME?.trim() &&
@@ -94,13 +119,17 @@ export async function POST(req: Request) {
 
         const uploadResult = await new Promise<any>((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: "terbitkata", resource_type: "image" },
+            {
+              folder: "terbitkata",
+              resource_type: "image",
+              format: finalExt === ".webp" ? "webp" : undefined,
+            },
             (error, result) => {
               if (error) reject(error);
               else resolve(result);
             }
           );
-          uploadStream.end(buffer);
+          uploadStream.end(processedBuffer);
         });
 
         return NextResponse.json({ url: uploadResult.secure_url });
@@ -118,11 +147,10 @@ export async function POST(req: Request) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    const safeExt = originalExt || ".jpg";
-    const cleanFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}${safeExt}`;
+    const cleanFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}${finalExt}`;
     const filePath = path.join(uploadDir, cleanFileName);
 
-    fs.writeFileSync(filePath, buffer);
+    fs.writeFileSync(filePath, processedBuffer);
 
     return NextResponse.json({ url: `/uploads/${cleanFileName}` });
   } catch (error) {

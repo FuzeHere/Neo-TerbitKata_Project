@@ -1,6 +1,7 @@
 import React from "react";
 import { db } from "@/lib/db";
 import Link from "next/link";
+import Image from "next/image";
 import { Clock } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
@@ -74,13 +75,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             >
               <div className="space-y-3">
                 <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border">
-                  <img 
+                  <Image 
                     src={article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80"} 
                     alt={article.title}
-                    className="object-cover w-full h-full"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
                   />
                   {article.categories[0] && (
-                    <span className="absolute top-2 left-2 bg-primary text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    <span className="absolute top-2 left-2 z-10 bg-primary text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
                       {article.categories[0].name}
                     </span>
                   )}

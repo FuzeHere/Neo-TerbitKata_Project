@@ -1,6 +1,7 @@
 import React from "react";
 import { db } from "@/lib/db";
 import Link from "next/link";
+import Image from "next/image";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import HeaderSearch from "@/components/public/HeaderSearch";
@@ -32,7 +33,14 @@ export default async function PublicLayout({
           <div className="h-16 flex items-center justify-between gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center shrink-0">
-              <img src="/logo.png" alt="TerbitKata Logo" className="h-9 w-auto object-contain" />
+              <Image
+                src="/logo.png"
+                alt="TerbitKata Logo"
+                width={180}
+                height={36}
+                className="h-9 w-auto object-contain"
+                preload
+              />
             </Link>
 
             {/* Desktop Navigation */}
@@ -81,7 +89,13 @@ export default async function PublicLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid gap-8 md:grid-cols-4">
           <div className="md:col-span-2 space-y-4">
             <Link href="/" className="flex items-center">
-              <img src="/logo.png" alt="TerbitKata Logo" className="h-10 w-auto object-contain" />
+              <Image
+                src="/logo.png"
+                alt="TerbitKata Logo"
+                width={200}
+                height={40}
+                className="h-10 w-auto object-contain"
+              />
             </Link>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
               TerbitKata adalah portal berita digital modern yang menyajikan jurnalisme berkualitas, objektif, dan independen secara real-time dari seluruh nusantara.

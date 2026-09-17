@@ -2,6 +2,7 @@ import React from "react";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Clock } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
@@ -78,10 +79,12 @@ export default async function TagPage({ params }: TagPageProps) {
             >
               <div className="space-y-3">
                 <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-border">
-                  <img 
+                  <Image 
                     src={article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80"} 
                     alt={article.title}
-                    className="object-cover w-full h-full"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
                   />
                 </div>
                 <h4 className="font-bold text-base text-slate-900 dark:text-white hover:text-primary transition line-clamp-2 leading-snug">

@@ -110,4 +110,11 @@ describe("Article Open Graph Metadata Resolution", () => {
 
     expect(ogImageUrl).toBe("https://terbitkata.xyz/logo.png");
   });
+
+  it("should format og image route with encoded absolute URL", () => {
+    const rawOgImageUrl = toAbsoluteUrl("/uploads/sample.jpg", baseUrl);
+    const ogRouteUrl = `${baseUrl}/api/og?url=${encodeURIComponent(rawOgImageUrl)}`;
+
+    expect(ogRouteUrl).toBe("https://terbitkata.xyz/api/og?url=https%3A%2F%2Fterbitkata.xyz%2Fuploads%2Fsample.jpg");
+  });
 });

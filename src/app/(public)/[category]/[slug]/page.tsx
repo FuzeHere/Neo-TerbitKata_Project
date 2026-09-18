@@ -36,11 +36,12 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
 
   const baseUrl = await getServerBaseUrl();
   const canonicalUrl = `${baseUrl}/${resolvedParams.category}/${article.slug}`;
-  const ogImageUrl = toAbsoluteUrl(
-    article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80",
+  const rawOgImageUrl = toAbsoluteUrl(
+    article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?fm=jpg&fit=crop&w=1200&h=630&q=80",
     baseUrl
   );
-  const imageMime = getImageMimeType(ogImageUrl);
+  // Route through /api/og to guarantee 1200x630 JPEG format under 200KB for WhatsApp, Facebook, and Twitter
+  const ogImageUrl = `${baseUrl}/api/og?url=${encodeURIComponent(rawOgImageUrl)}`;
   const description = article.excerpt || `Baca artikel "${article.title}" selengkapnya di TerbitKata.`;
 
   return {
@@ -66,7 +67,7 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
           width: 1200,
           height: 630,
           alt: article.title,
-          type: imageMime,
+          type: "image/jpeg",
         },
       ],
     },

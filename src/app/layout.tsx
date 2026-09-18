@@ -22,6 +22,28 @@ export const metadata: Metadata = {
     template: "%s | TerbitKata",
   },
   description: "Portal berita digital independen terpercaya dengan berita teraktual dan mendalam.",
+  openGraph: {
+    title: "TerbitKata - Portal Berita Digital Terpercaya",
+    description: "Portal berita digital independen terpercaya dengan berita teraktual dan mendalam.",
+    siteName: "TerbitKata",
+    locale: "id_ID",
+    type: "website",
+    images: [
+      {
+        url: "/api/og",
+        width: 1200,
+        height: 630,
+        alt: "TerbitKata",
+        type: "image/jpeg",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TerbitKata - Portal Berita Digital Terpercaya",
+    description: "Portal berita digital independen terpercaya dengan berita teraktual dan mendalam.",
+    images: ["/api/og"],
+  },
 };
 
 export default function RootLayout({

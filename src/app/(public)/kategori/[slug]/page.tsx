@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, ArrowRight } from "lucide-react";
+import { Clock } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
 
@@ -23,9 +23,31 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     return { title: "Kategori Tidak Ditemukan - TerbitKata" };
   }
 
+  const title = `Berita Seputar ${category.name} - TerbitKata`;
+  const description = category.description || `Kumpulan berita terupdate seputar ${category.name} di TerbitKata.`;
+
   return {
-    title: `Berita Seputar ${category.name} - TerbitKata`,
-    description: category.description || `Kumpulan berita terupdate seputar ${category.name} di TerbitKata.`
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: [
+        {
+          url: "/logo.png",
+          width: 800,
+          height: 600,
+          alt: category.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/logo.png"],
+    },
   };
 }
 

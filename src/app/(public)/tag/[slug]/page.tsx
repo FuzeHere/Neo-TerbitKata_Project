@@ -23,9 +23,31 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
     return { title: "Tag Tidak Ditemukan - TerbitKata" };
   }
 
+  const title = `Berita dengan Tag #${tag.name} - TerbitKata`;
+  const description = `Daftar berita terbaru yang diberi tag #${tag.name} di TerbitKata.`;
+
   return {
-    title: `Berita dengan Tag #${tag.name} - TerbitKata`,
-    description: `Daftar berita terbaru yang diberi tag #${tag.name} di TerbitKata.`
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: [
+        {
+          url: "/logo.png",
+          width: 800,
+          height: 600,
+          alt: `#${tag.name}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/logo.png"],
+    },
   };
 }
 

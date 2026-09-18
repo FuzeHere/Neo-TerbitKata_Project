@@ -15,9 +15,31 @@ interface SearchPageProps {
 export async function generateMetadata({ searchParams }: SearchPageProps): Promise<Metadata> {
   const resolvedSearchParams = await searchParams;
   const query = resolvedSearchParams.q || "";
+  const title = query ? `Hasil Pencarian untuk "${query}" - TerbitKata` : "Pencarian Berita - TerbitKata";
+  const description = `Cari berita terhangat dan artikel mendalam di portal berita digital TerbitKata.`;
+
   return {
-    title: query ? `Hasil Pencarian untuk "${query}" - TerbitKata` : "Pencarian Berita - TerbitKata",
-    description: `Cari berita terhangat dan artikel mendalam di portal berita digital TerbitKata.`
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: [
+        {
+          url: "/logo.png",
+          width: 800,
+          height: 600,
+          alt: "Pencarian TerbitKata",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/logo.png"],
+    },
   };
 }
 

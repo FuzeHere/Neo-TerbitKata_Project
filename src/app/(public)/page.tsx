@@ -2,8 +2,8 @@ import React from "react";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, User, ArrowRight, MessageSquare } from "lucide-react";
-import { formatDate, calculateReadingTime } from "@/lib/utils";
+import { Clock, ArrowRight, MessageSquare } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
 
 export const revalidate = 0; // Ensure fresh data on every load
@@ -16,8 +16,22 @@ export const metadata: Metadata = {
     title: "TerbitKata - Portal Berita Digital Independen Terpercaya",
     description: "TerbitKata menyajikan berita terkini secara aktual, tepercaya, dan mendalam.",
     type: "website",
-    locale: "id_ID"
-  }
+    locale: "id_ID",
+    images: [
+      {
+        url: "/logo.png",
+        width: 800,
+        height: 600,
+        alt: "TerbitKata Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TerbitKata - Portal Berita Digital Independen Terpercaya",
+    description: "TerbitKata menyajikan berita terkini secara aktual, tepercaya, dan mendalam.",
+    images: ["/logo.png"],
+  },
 };
 
 export default async function Homepage() {

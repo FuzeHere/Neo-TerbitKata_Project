@@ -3,13 +3,14 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { formatDate, calculateReadingTime } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { Clock, User, Calendar, BookOpen, Eye } from "lucide-react";
+import { Clock, Calendar, Eye } from "lucide-react";
 import CommentSection from "@/components/public/CommentSection";
 import ShareButtons from "@/components/public/ShareButtons";
 import ArticleViewTracker from "@/components/public/ArticleViewTracker";
 import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { getServerBaseUrl, toAbsoluteUrl, getImageMimeType } from "@/lib/url";
 
 export const revalidate = 0;
 
@@ -21,7 +22,10 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
   const resolvedParams = await params;
   const article = await db.article.findUnique({
     where: { slug: resolvedParams.slug },
-    include: { categories: true }
+    include: {
+      categories: true,
+      author: { select: { name: true } },
+    },
   });
 
   if (!article) {
@@ -30,15 +34,48 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
     };
   }
 
+  const baseUrl = await getServerBaseUrl();
+  const canonicalUrl = `${baseUrl}/${resolvedParams.category}/${article.slug}`;
+  const ogImageUrl = toAbsoluteUrl(
+    article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80",
+    baseUrl
+  );
+  const imageMime = getImageMimeType(ogImageUrl);
+  const description = article.excerpt || `Baca artikel "${article.title}" selengkapnya di TerbitKata.`;
+
   return {
     title: `${article.title} - TerbitKata`,
-    description: article.excerpt,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: article.title,
-      description: article.excerpt,
+      description,
+      url: canonicalUrl,
+      siteName: "TerbitKata",
+      locale: "id_ID",
       type: "article",
-      images: article.thumbnail ? [{ url: article.thumbnail }] : [],
-    }
+      publishedTime: article.publishedAt?.toISOString(),
+      modifiedTime: article.updatedAt?.toISOString(),
+      authors: article.author ? [article.author.name] : [],
+      images: [
+        {
+          url: ogImageUrl,
+          secureUrl: ogImageUrl.startsWith("https://") ? ogImageUrl : undefined,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+          type: imageMime,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description,
+      images: [ogImageUrl],
+    },
   };
 }
 
@@ -62,7 +99,12 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   }
 
   const readingTime = calculateReadingTime(article.content);
-  const articleUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/${resolvedParams.category}/${resolvedParams.slug}`;
+  const baseUrl = await getServerBaseUrl();
+  const articleUrl = `${baseUrl}/${resolvedParams.category}/${resolvedParams.slug}`;
+  const absoluteThumbnail = toAbsoluteUrl(
+    article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80",
+    baseUrl
+  );
 
   // Serialize comments dates
   const serializedComments = article.comments.map(c => ({
@@ -81,7 +123,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
             "@type": "NewsArticle",
             "headline": article.title,
             "image": [
-              article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80"
+              absoluteThumbnail
             ],
             "datePublished": article.publishedAt.toISOString(),
             "dateModified": article.updatedAt.toISOString(),
@@ -94,7 +136,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
               "name": "TerbitKata",
               "logo": {
                 "@type": "ImageObject",
-                "url": `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/logo.png`
+                "url": `${baseUrl}/logo.png`
               }
             },
             "description": article.excerpt
@@ -127,35 +169,43 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
           ))}
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white leading-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white leading-tight">
           {article.title}
         </h1>
 
-        <p className="text-muted-foreground text-base sm:text-lg leading-relaxed italic border-l-4 border-border pl-4 py-1">
+        <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg leading-relaxed italic bg-slate-50 dark:bg-slate-900/40 border-l-4 border-primary pl-4 pr-3 py-2.5 rounded-r-lg">
           {article.excerpt}
         </p>
 
         {/* Author Metadata */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-y border-border py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-y border-border py-4">
           <div className="flex items-center gap-3">
             <Image 
               src={article.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"} 
               alt={article.author.name}
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded-full border border-slate-200 object-cover"
+              width={44}
+              height={44}
+              className="h-11 w-11 rounded-full border border-slate-200 object-cover shrink-0"
             />
-            <div>
-              <p className="text-sm font-bold">{article.author.name}</p>
-              <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
-                <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {formatDate(article.publishedAt)}</span>
-                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {readingTime} Menit Baca</span>
-                <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {article.views ?? 0} Kali Dibaca</span>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{article.author.name}</p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <Calendar className="h-3.5 w-3.5 text-primary" /> {formatDate(article.publishedAt)}
+                </span>
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <Clock className="h-3.5 w-3.5 text-primary" /> {readingTime} Menit Baca
+                </span>
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <Eye className="h-3.5 w-3.5 text-primary" /> {article.views ?? 0} Kali Dibaca
+                </span>
               </div>
             </div>
           </div>
 
-          <ShareButtons title={article.title} url={articleUrl} />
+          <div className="pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
+            <ShareButtons title={article.title} url={articleUrl} />
+          </div>
         </div>
       </div>
 
@@ -175,7 +225,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
       {/* Article Content */}
       <div 
-        className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 text-base sm:text-lg leading-relaxed space-y-6"
+        className="article-content max-w-none text-slate-800 dark:text-slate-200 text-base sm:text-lg leading-relaxed"
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }}
       />
 

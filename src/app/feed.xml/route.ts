@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getStaticBaseUrl } from "@/lib/url";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600; // Cache for 1 hour
@@ -14,7 +15,7 @@ export async function GET() {
     take: 20
   });
 
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const baseUrl = getStaticBaseUrl();
 
   const xmlItems = articles
     .map((article) => {

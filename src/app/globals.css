@@ -115,7 +115,7 @@ body {
   background: var(--muted-foreground);
 }
 
-/* TipTap Editor Styles */
+/* TipTap Editor & Public Article Content Shared Typography Styles */
 .tiptap {
   outline: none;
   min-height: 360px;
@@ -129,73 +129,154 @@ body {
   pointer-events: none;
 }
 
-.tiptap h1 {
+.tiptap,
+.article-content {
+  color: inherit;
+  line-height: 1.8;
+  word-break: break-word;
+}
+
+.tiptap h1,
+.article-content h1 {
   font-size: 1.875rem;
   line-height: 2.25rem;
   font-weight: 800;
-  margin-top: 1.5rem;
+  margin-top: 1.75rem;
   margin-bottom: 0.75rem;
+  color: var(--foreground);
 }
 
-.tiptap h2 {
+.tiptap h2,
+.article-content h2 {
   font-size: 1.5rem;
   line-height: 2rem;
   font-weight: 700;
-  margin-top: 1.25rem;
+  margin-top: 1.5rem;
   margin-bottom: 0.5rem;
+  color: var(--foreground);
 }
 
-.tiptap h3 {
+.tiptap h3,
+.article-content h3 {
   font-size: 1.25rem;
   line-height: 1.75rem;
   font-weight: 600;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   margin-bottom: 0.5rem;
+  color: var(--foreground);
 }
 
-.tiptap p {
-  margin-bottom: 1rem;
+.tiptap p,
+.article-content p {
+  margin-bottom: 1.25rem;
+  line-height: 1.85;
+}
+
+.tiptap ul,
+.article-content ul {
+  list-style-type: disc !important;
+  padding-left: 1.75rem !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.tiptap ol,
+.article-content ol {
+  list-style-type: decimal !important;
+  padding-left: 1.75rem !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.tiptap li,
+.article-content li {
+  margin-bottom: 0.35rem;
   line-height: 1.75;
 }
 
-.tiptap ul {
-  list-style-type: disc !important;
-  padding-left: 1.5rem !important;
-  margin-bottom: 1rem !important;
-}
-
-.tiptap ol {
-  list-style-type: decimal !important;
-  padding-left: 1.5rem !important;
-  margin-bottom: 1rem !important;
-}
-
-.tiptap li {
-  margin-bottom: 0.25rem;
-}
-
-.tiptap blockquote {
+.tiptap blockquote,
+.article-content blockquote {
   border-left: 4px solid var(--primary);
-  padding-left: 1rem;
-  margin-left: 0;
-  margin-right: 0;
-  margin-top: 1.25rem;
-  margin-bottom: 1.25rem;
+  padding: 0.75rem 1.25rem;
+  margin: 1.5rem 0;
   font-style: italic;
-  color: var(--muted-foreground);
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--foreground);
+  background-color: rgba(32, 123, 255, 0.05);
+  border-radius: 0 0.5rem 0.5rem 0;
 }
 
-.tiptap hr {
+.tiptap blockquote p,
+.article-content blockquote p {
+  margin-bottom: 0.5rem;
+}
+
+.tiptap blockquote p:last-child,
+.article-content blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.tiptap hr,
+.article-content hr {
   border: none;
   border-top: 1px solid var(--border);
-  margin: 1.5rem 0;
+  margin: 1.75rem 0;
 }
 
-.tiptap a {
+.tiptap a,
+.article-content a {
   color: var(--primary);
   text-decoration: underline;
   text-underline-offset: 3px;
-  font-weight: 500;
+  font-weight: 600;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.tiptap a:hover,
+.article-content a:hover {
+  color: var(--secondary);
+  opacity: 0.85;
+}
+
+.tiptap strong,
+.article-content strong {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.tiptap em,
+.article-content em {
+  font-style: italic;
+}
+
+.tiptap u,
+.article-content u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tiptap s,
+.article-content s {
+  text-decoration: line-through;
+}
+
+.tiptap img,
+.article-content img {
+  border-radius: 0.75rem;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+  display: block;
+}
+
+.tiptap code,
+.article-content code {
+  background-color: var(--muted);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family: monospace;
 }
 
 .baca-juga-card {
@@ -204,4 +285,13 @@ body {
   border-radius: 0.75rem;
   border-left: 4px solid var(--primary);
   background-color: rgba(32, 123, 255, 0.08);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.baca-juga-card a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
 }

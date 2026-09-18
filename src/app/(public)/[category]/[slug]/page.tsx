@@ -214,16 +214,23 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
       {/* Featured Image */}
       {article.thumbnail && (
-        <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border bg-muted">
-          <Image
-            src={article.thumbnail}
-            alt={article.title}
-            fill
-            preload
-            sizes="(max-width: 1024px) 100vw, 896px"
-            className="object-cover"
-          />
-        </div>
+        <figure className="space-y-2">
+          <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border bg-muted">
+            <Image
+              src={article.thumbnail}
+              alt={article.thumbnailCaption || article.title}
+              fill
+              preload
+              sizes="(max-width: 1024px) 100vw, 896px"
+              className="object-cover"
+            />
+          </div>
+          {article.thumbnailCaption && (
+            <figcaption className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic px-1 leading-relaxed">
+              {article.thumbnailCaption}
+            </figcaption>
+          )}
+        </figure>
       )}
 
       {/* Article Content */}

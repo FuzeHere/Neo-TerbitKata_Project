@@ -25,6 +25,7 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
   const [excerpt, setExcerpt] = useState(article?.excerpt || "");
   const [content, setContent] = useState(article?.content || "");
   const [thumbnail, setThumbnail] = useState(article?.thumbnail || "");
+  const [thumbnailCaption, setThumbnailCaption] = useState(article?.thumbnailCaption || "");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     article?.categories?.map((c: any) => c.id) || []
   );
@@ -106,6 +107,7 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
       excerpt: excerpt || title.substring(0, 150) + "...",
       content,
       thumbnail,
+      thumbnailCaption,
       categoryIds: selectedCategories,
       tagIds: selectedTags,
       isPublished,
@@ -312,6 +314,23 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
               onChange={(e) => setThumbnail(e.target.value)}
               className="text-xs h-8 bg-transparent border-slate-200 dark:border-slate-800 focus-visible:ring-primary"
             />
+
+            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+              <Label htmlFor="thumbnailCaption" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Keterangan / Deskripsi Foto
+              </Label>
+              <Textarea
+                id="thumbnailCaption"
+                rows={2}
+                placeholder="Contoh: Suhasil Nazara memberikan sambutan di Gedung Kemenkeu, Jakarta. Tempo/Muhammad Zaki Fauzi"
+                value={thumbnailCaption}
+                onChange={(e) => setThumbnailCaption(e.target.value)}
+                className="text-xs bg-transparent border-slate-200 dark:border-slate-800 focus-visible:ring-primary resize-none"
+              />
+              <p className="text-[10px] text-slate-500">
+                Deskripsi atau sumber foto yang akan tampil tepat di bawah foto artikel.
+              </p>
+            </div>
           </CardContent>
         </Card>
 

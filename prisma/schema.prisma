@@ -32,6 +32,7 @@ model Article {
   excerpt     String
   content     String     @db.Text
   thumbnail   String?
+  thumbnailCaption String?   @map("thumbnail_caption")
   authorId    String     @map("author_id")
   author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   publishedAt DateTime?  @map("published_at")

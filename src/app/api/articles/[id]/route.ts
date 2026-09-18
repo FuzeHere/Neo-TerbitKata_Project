@@ -59,6 +59,7 @@ export async function PUT(
       excerpt,
       content,
       thumbnail,
+      thumbnailCaption,
       categoryIds,
       tagIds,
       isPublished,
@@ -108,6 +109,7 @@ export async function PUT(
         excerpt: excerpt || title,
         content,
         thumbnail,
+        thumbnailCaption,
         publishedAt,
         isFeatured: !!isFeatured,
         // Replace existing relationships

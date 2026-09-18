@@ -174,9 +174,11 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
           {article.title}
         </h1>
 
-        <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg leading-relaxed italic bg-slate-50 dark:bg-slate-900/40 border-l-4 border-primary pl-4 pr-3 py-2.5 rounded-r-lg">
-          {article.excerpt}
-        </p>
+        {article.excerpt && (
+          <p className="text-slate-800 dark:text-slate-200 text-base sm:text-lg leading-relaxed">
+            {article.excerpt}
+          </p>
+        )}
 
         {/* Author Metadata */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-y border-border py-4">

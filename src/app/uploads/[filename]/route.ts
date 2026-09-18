@@ -35,6 +35,7 @@ export async function GET(
       status: 200,
       headers: {
         "Content-Type": contentType,
+        "Content-Length": fileBuffer.length.toString(),
         "Cache-Control": "public, max-age=31536000, immutable",
       },
     });

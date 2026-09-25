@@ -77,7 +77,7 @@ export default function ArticleSidebar({
       <div className="space-y-4 pt-2">
         <div className="border-b-2 border-slate-900 dark:border-white pb-2 flex items-center justify-between">
           <h3 className="font-extrabold text-sm tracking-wider uppercase text-slate-900 dark:text-white flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 bg-red-600 inline-block"></span>
+            <span className="w-2.5 h-2.5 bg-primary inline-block"></span>
             Artikel Trending
           </h3>
         </div>
@@ -96,7 +96,7 @@ export default function ArticleSidebar({
                   sizes="80px"
                   className="object-cover group-hover:scale-105 transition duration-300"
                 />
-                <span className="absolute bottom-1 left-1 bg-red-600 text-white font-bold text-[9px] w-4 h-4 rounded-xs flex items-center justify-center">
+                <span className="absolute bottom-1 left-1 bg-primary text-white font-bold text-[9px] w-4 h-4 rounded-xs flex items-center justify-center">
                   {index + 1}
                 </span>
               </Link>
@@ -106,7 +106,7 @@ export default function ArticleSidebar({
                     href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
                     className="flex items-start gap-1"
                   >
-                    <span className="text-red-600 font-extrabold text-xs inline-block shrink-0 mt-0.5">
+                    <span className="text-primary font-extrabold text-xs inline-block shrink-0 mt-0.5">
                       ■
                     </span>
                     <span>{item.title}</span>

@@ -34,13 +34,13 @@ export default function HighlightSlider({ highlights }: HighlightSliderProps) {
   const [isPaused, setIsPaused] = useState(false);
   const count = highlights.length;
 
-  // Auto-scroll every 2 seconds (2000ms)
+  // Auto-scroll every 5 seconds (5000ms - 3 seconds longer)
   useEffect(() => {
     if (count <= 1 || isPaused) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % count);
-    }, 2000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [count, isPaused]);
@@ -95,7 +95,7 @@ export default function HighlightSlider({ highlights }: HighlightSliderProps) {
                 className={`text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1 ${
                   currentArticle.highlightType === "PALING BANYAK DIBACA"
                     ? "bg-amber-500 text-slate-950 font-black"
-                    : "bg-red-600 text-white"
+                    : "bg-primary text-white"
                 }`}
               >
                 {currentArticle.highlightType === "PALING BANYAK DIBACA" ? (
@@ -141,7 +141,7 @@ export default function HighlightSlider({ highlights }: HighlightSliderProps) {
           <div className="p-6 md:p-8 md:col-span-5 flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="font-bold uppercase tracking-wider text-red-600">
+                <span className="font-bold uppercase tracking-wider text-primary">
                   {currentArticle.highlightType}
                 </span>
                 <span className="text-[11px] font-semibold bg-muted px-2 py-0.5 rounded-full">
@@ -187,25 +187,12 @@ export default function HighlightSlider({ highlights }: HighlightSliderProps) {
 
               <Link
                 href={`/${currentArticle.categories[0]?.slug || "berita"}/${currentArticle.slug}`}
-                className="text-xs font-bold text-red-600 hover:underline shrink-0"
+                className="text-xs font-bold text-primary hover:underline shrink-0"
               >
                 Baca →
               </Link>
             </div>
           </div>
-        </div>
-
-        {/* 2-Second Animated Progress Bar */}
-        <div className="h-1 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-          <div
-            key={currentIndex}
-            className={`h-full bg-red-600 transition-all ${
-              isPaused ? "w-full" : "w-full animate-[progress_2s_linear]"
-            }`}
-            style={{
-              animationDuration: "2000ms",
-            }}
-          />
         </div>
       </div>
 
@@ -220,13 +207,13 @@ export default function HighlightSlider({ highlights }: HighlightSliderProps) {
               onClick={() => setCurrentIndex(idx)}
               className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
                 isActive
-                  ? "border-red-600 bg-red-50/50 dark:bg-red-950/20 shadow-xs"
+                  ? "border-primary bg-primary/10 dark:bg-primary/20 shadow-xs"
                   : "border-border bg-card hover:border-slate-300 dark:hover:border-slate-700"
               }`}
             >
               <span
                 className={`font-black text-xs shrink-0 mt-0.5 ${
-                  isActive ? "text-red-600" : "text-slate-400"
+                  isActive ? "text-primary" : "text-slate-400"
                 }`}
               >
                 ■
@@ -234,7 +221,7 @@ export default function HighlightSlider({ highlights }: HighlightSliderProps) {
               <div className="min-w-0 space-y-1">
                 <span
                   className={`text-[9px] font-extrabold uppercase tracking-wider block ${
-                    isActive ? "text-red-600" : "text-muted-foreground"
+                    isActive ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
                   {item.highlightType}

@@ -49,16 +49,7 @@ export default async function Homepage() {
   const defaultThumb =
     "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80";
 
-  // 1. Fetch categories for category ribbon
-  const categories = await db.category.findMany({
-    orderBy: { name: "asc" },
-    take: 8,
-    include: {
-      _count: { select: { articles: { where: { publishedAt: { not: null } } } } },
-    },
-  });
-
-  // 2. Fetch Highlight Articles (Requirement: Exactly 3 items: 2 manual highlights + 1 most read)
+  // Fetch Highlight Articles (Requirement: Exactly 3 items: 2 manual highlights + 1 most read)
   // Step A: 2 manual highlights
   let manualFeatured = await db.article.findMany({
     where: {
@@ -206,38 +197,16 @@ export default async function Homepage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
-      {/* 1. Category Quick Ribbon (Tempo style sub-nav) */}
-      <div className="border-b border-border pb-3 flex items-center gap-4 sm:gap-6 overflow-x-auto scrollbar-none text-xs font-semibold">
-        <span className="text-red-600 uppercase font-black tracking-wider flex items-center gap-1 shrink-0">
-          <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-          Kanal Utama
-        </span>
-        {categories.map((cat, idx) => (
-          <Link
-            key={cat.id}
-            href={`/kategori/${cat.slug}`}
-            className="text-slate-700 dark:text-slate-300 hover:text-red-600 transition whitespace-nowrap capitalize flex items-center gap-1.5 shrink-0"
-          >
-            {idx === 0 && (
-              <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-xs">
-                Baru
-              </span>
-            )}
-            {cat.name}
-          </Link>
-        ))}
-      </div>
-
-      {/* 2. Headline Carousel (Auto-sliding every 2s, 3 highlights: 2 manual + 1 top read) */}
+      {/* 1. Headline Carousel (Auto-sliding every 5s, 3 highlights: 2 manual + 1 top read) */}
       <section aria-label="Sorotan Berita Utama">
         <HighlightSlider highlights={highlightItems} />
       </section>
 
-      {/* 3. ARTIKEL TRENDING (Image 3 Section: Left 4 list items, Right 1 large card) */}
+      {/* 2. ARTIKEL TRENDING (Image 3 Section: Left 4 list items, Right 1 large card) */}
       <section className="space-y-6 pt-2">
         <div className="border-b-2 border-slate-900 dark:border-white pb-2 flex items-center justify-between">
           <h2 className="font-black text-lg sm:text-xl tracking-wider uppercase text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="w-3 h-3 bg-red-600 inline-block"></span>
+            <span className="w-3 h-3 bg-primary inline-block"></span>
             Artikel Trending
           </h2>
         </div>
@@ -261,18 +230,18 @@ export default async function Homepage() {
                     sizes="96px"
                     className="object-cover group-hover:scale-105 transition duration-300"
                   />
-                  <span className="absolute bottom-1 left-1 bg-red-600 text-white font-black text-[10px] w-5 h-5 rounded-xs flex items-center justify-center">
+                  <span className="absolute bottom-1 left-1 bg-primary text-white font-black text-[10px] w-5 h-5 rounded-xs flex items-center justify-center">
                     {index + 1}
                   </span>
                 </Link>
 
                 <div className="min-w-0 flex-1 space-y-1.5">
-                  <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-red-600 transition leading-snug line-clamp-2">
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-primary transition leading-snug line-clamp-2">
                     <Link
                       href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
                       className="flex items-start gap-1.5"
                     >
-                      <span className="text-red-600 font-black text-xs inline-block shrink-0 mt-0.5">
+                      <span className="text-primary font-black text-xs inline-block shrink-0 mt-0.5">
                         ■
                       </span>
                       <span>{item.title}</span>
@@ -305,18 +274,18 @@ export default async function Homepage() {
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover group-hover:scale-103 transition duration-500"
                 />
-                <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm shadow-sm flex items-center gap-1">
+                <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm shadow-sm flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> Trending Top #1
                 </span>
               </Link>
 
               <div className="p-5 sm:p-6 space-y-3">
-                <h3 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-red-600 transition leading-tight">
+                <h3 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-primary transition leading-tight">
                   <Link
                     href={`/${topTrending.categories[0]?.slug || "berita"}/${topTrending.slug}`}
                     className="flex items-start gap-2"
                   >
-                    <span className="text-red-600 font-black text-sm inline-block shrink-0 mt-1">
+                    <span className="text-primary font-black text-sm inline-block shrink-0 mt-1">
                       ■
                     </span>
                     <span>{topTrending.title}</span>
@@ -339,18 +308,18 @@ export default async function Homepage() {
         </div>
       </section>
 
-      {/* 4. DARI TERBITKATA PLUS (Dark Banner Section - Matches Image 3 "DARI TEMPO PLUS") */}
+      {/* 3. DARI TERBITKATA PLUS (Dark Banner Section - Matches Image 3 "DARI TEMPO PLUS") */}
       <section className="rounded-2xl bg-slate-950 text-white p-6 sm:p-8 space-y-6">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-red-600 inline-block"></span>
+            <span className="w-3 h-3 bg-primary inline-block"></span>
             <h2 className="font-black text-base sm:text-lg uppercase tracking-wider text-white">
               Dari TerbitKata Plus
             </h2>
           </div>
           <Link
             href="/kategori/investasi"
-            className="text-xs font-bold text-slate-400 hover:text-red-500 transition flex items-center gap-1"
+            className="text-xs font-bold text-slate-400 hover:text-primary transition flex items-center gap-1"
           >
             Jelajahi TerbitKata Plus <ChevronRight className="w-3.5 h-3.5" />
           </Link>
@@ -371,12 +340,12 @@ export default async function Homepage() {
                   className="object-cover group-hover:scale-105 transition duration-500"
                 />
                 {item.categories[0] && (
-                  <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-xs">
+                  <span className="absolute top-2 left-2 bg-primary text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-xs">
                     {item.categories[0].name}
                   </span>
                 )}
               </Link>
-              <h3 className="font-bold text-sm sm:text-base text-slate-100 group-hover:text-red-400 transition leading-snug line-clamp-2">
+              <h3 className="font-bold text-sm sm:text-base text-slate-100 group-hover:text-primary/90 transition leading-snug line-clamp-2">
                 <Link href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}>
                   {item.title}
                 </Link>
@@ -386,16 +355,16 @@ export default async function Homepage() {
         </div>
       </section>
 
-      {/* 5. ARTIKEL TERBARU (Matches Image 3 Section: Left Big Article, Right 4 Stacks) */}
+      {/* 4. ARTIKEL TERBARU (Matches Image 3 Section: Left Big Article, Right 4 Stacks) */}
       <section className="space-y-6">
         <div className="border-b-2 border-slate-900 dark:border-white pb-2 flex items-center justify-between">
           <h2 className="font-black text-lg sm:text-xl tracking-wider uppercase text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="w-3 h-3 bg-red-600 inline-block"></span>
+            <span className="w-3 h-3 bg-primary inline-block"></span>
             Artikel Terbaru
           </h2>
           <Link
             href="/search"
-            className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
+            className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
           >
             Selengkapnya <ChevronRight className="w-3.5 h-3.5" />
           </Link>
@@ -429,7 +398,7 @@ export default async function Homepage() {
                     href={`/${mainLatest.categories[0]?.slug || "berita"}/${mainLatest.slug}`}
                     className="flex items-start gap-2"
                   >
-                    <span className="text-red-600 font-black text-sm inline-block shrink-0 mt-1">
+                    <span className="text-primary font-black text-sm inline-block shrink-0 mt-1">
                       ■
                     </span>
                     <span>{mainLatest.title}</span>
@@ -478,7 +447,7 @@ export default async function Homepage() {
                       href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
                       className="flex items-start gap-1.5"
                     >
-                      <span className="text-red-600 font-black text-xs inline-block shrink-0 mt-0.5">
+                      <span className="text-primary font-black text-xs inline-block shrink-0 mt-0.5">
                         ■
                       </span>
                       <span>{item.title}</span>
@@ -499,12 +468,12 @@ export default async function Homepage() {
         </div>
       </section>
 
-      {/* 6. KOLOM / MATERI OPINI (Matches Image 3 Bottom Section: KOLOM) */}
+      {/* 5. KOLOM / MATERI OPINI (Matches Image 3 Bottom Section: KOLOM) */}
       <section className="space-y-4 pt-4 border-t border-border">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <h2 className="font-black text-lg sm:text-xl tracking-wider uppercase text-slate-900 dark:text-white flex items-center gap-2">
-              <span className="w-3 h-3 bg-red-600 inline-block"></span>
+              <span className="w-3 h-3 bg-primary inline-block"></span>
               Kolom Opini
             </h2>
             <p className="text-xs text-muted-foreground">
@@ -513,7 +482,7 @@ export default async function Homepage() {
           </div>
           <Link
             href="/kategori/opini"
-            className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
+            className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
           >
             Kolom Lain <ChevronRight className="w-3.5 h-3.5" />
           </Link>
@@ -523,7 +492,7 @@ export default async function Homepage() {
           {opinionArticles.map((item, idx) => (
             <div
               key={item.id}
-              className="p-4 rounded-xl border border-border bg-card space-y-3 hover:border-red-600/40 transition"
+              className="p-4 rounded-xl border border-border bg-card space-y-3 hover:border-primary/40 transition"
             >
               <div className="flex items-center gap-3">
                 <Image
@@ -544,7 +513,7 @@ export default async function Homepage() {
                 </div>
               </div>
 
-              <h3 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 hover:text-red-600 transition line-clamp-2 leading-snug">
+              <h3 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 hover:text-primary transition line-clamp-2 leading-snug">
                 <Link href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}>
                   {item.title}
                 </Link>

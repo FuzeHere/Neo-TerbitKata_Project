@@ -92,13 +92,7 @@ export async function PUT(
       publishedAt = null;
     }
 
-    // Reset other featured articles if this one is featured
-    if (isFeatured) {
-      await db.article.updateMany({
-        where: { isFeatured: true, id: { not: id } },
-        data: { isFeatured: false }
-      });
-    }
+
 
     // Update the article
     const updatedArticle = await db.article.update({

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, X, Loader2, ArrowLeft } from "lucide-react";
+import { Upload, X, Loader2, ArrowLeft, Plus, FolderPlus } from "lucide-react";
 import Link from "next/link";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 
@@ -26,6 +26,7 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
   const [content, setContent] = useState(article?.content || "");
   const [thumbnail, setThumbnail] = useState(article?.thumbnail || "");
   const [thumbnailCaption, setThumbnailCaption] = useState(article?.thumbnailCaption || "");
+  const [categoryList, setCategoryList] = useState<any[]>(categories || []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     article?.categories?.map((c: any) => c.id) || []
   );
@@ -39,9 +40,54 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
     article ? !!article.isFeatured : false
   );
 
+  // New Category inline creation state
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatDesc, setNewCatDesc] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [categoryActionError, setCategoryActionError] = useState("");
+
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const handleCreateNewCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+
+    setCreatingCategory(true);
+    setCategoryActionError("");
+
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newCatName.trim(),
+          description: newCatDesc.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Add to local category list
+        setCategoryList((prev) => [...prev, data]);
+        // Automatically select the newly created category
+        setSelectedCategories((prev) => [...prev, data.id]);
+        // Reset form
+        setNewCatName("");
+        setNewCatDesc("");
+        setShowAddCategory(false);
+      } else {
+        setCategoryActionError(data.error || "Gagal membuat kategori baru");
+      }
+    } catch (err) {
+      setCategoryActionError("Terjadi kesalahan jaringan saat menambah kategori");
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -336,21 +382,127 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
 
         {/* Categories Card */}
         <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-base font-bold">Kategori</CardTitle>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-base font-bold">Kategori</CardTitle>
+              <p className="text-[10px] text-slate-500 mt-0.5">
+                {selectedCategories.length} kategori dipilih
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddCategory(!showAddCategory);
+                setCategoryActionError("");
+              }}
+              className="text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1 cursor-pointer bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded transition"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {showAddCategory ? "Tutup" : "Kategori Baru"}
+            </button>
           </CardHeader>
-          <CardContent className="space-y-2 max-h-48 overflow-y-auto pr-1">
-            {categories.map((cat) => (
-              <label key={cat.id} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedCategories.includes(cat.id)}
-                  onChange={() => handleCategoryChange(cat.id)}
-                  className="rounded text-primary border-slate-300 focus:ring-primary h-4 w-4"
+          <CardContent className="space-y-3">
+            {/* Inline Add Category Form */}
+            {showAddCategory && (
+              <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2.5 animate-in fade-in duration-150">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-primary flex items-center gap-1">
+                    <FolderPlus className="h-3.5 w-3.5" /> Tambah Kategori Baru
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddCategory(false)}
+                    className="text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                {categoryActionError && (
+                  <p className="text-[11px] text-rose-500 font-medium">
+                    {categoryActionError}
+                  </p>
+                )}
+                <Input
+                  type="text"
+                  placeholder="Nama kategori baru (mis: Opini, Gaya Hidup)..."
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  className="text-xs h-8 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800"
                 />
-                {cat.name}
-              </label>
-            ))}
+                <Input
+                  type="text"
+                  placeholder="Deskripsi singkat (opsional)..."
+                  value={newCatDesc}
+                  onChange={(e) => setNewCatDesc(e.target.value)}
+                  className="text-xs h-8 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={creatingCategory || !newCatName.trim()}
+                  onClick={handleCreateNewCategory}
+                  className="w-full h-8 text-xs bg-primary text-white cursor-pointer font-medium"
+                >
+                  {creatingCategory ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                      Menambahkan...
+                    </>
+                  ) : (
+                    "Simpan & Pilih Kategori"
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Selected category badges */}
+            {selectedCategories.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                {selectedCategories.map((id) => {
+                  const cat = categoryList.find((c) => c.id === id);
+                  if (!cat) return null;
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full"
+                    >
+                      {cat.name}
+                      <button
+                        type="button"
+                        onClick={() => handleCategoryChange(id)}
+                        className="hover:text-rose-500 transition"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Category Checkbox List */}
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+              {categoryList.length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-2">
+                  Belum ada kategori. Silakan buat di atas.
+                </p>
+              ) : (
+                categoryList.map((cat) => (
+                  <label
+                    key={cat.id}
+                    className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-primary transition cursor-pointer py-0.5"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(cat.id)}
+                      onChange={() => handleCategoryChange(cat.id)}
+                      className="rounded text-primary border-slate-300 focus:ring-primary h-4 w-4"
+                    />
+                    <span className="truncate">{cat.name}</span>
+                  </label>
+                ))
+              )}
+            </div>
           </CardContent>
         </Card>
 

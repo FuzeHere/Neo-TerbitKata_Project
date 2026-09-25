@@ -132,13 +132,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Artikel dengan judul serupa sudah ada" }, { status: 400 });
     }
 
-    // Reset other featured articles if this one is featured
-    if (isFeatured) {
-      await db.article.updateMany({
-        where: { isFeatured: true },
-        data: { isFeatured: false }
-      });
-    }
+
 
     const article = await db.article.create({
       data: {

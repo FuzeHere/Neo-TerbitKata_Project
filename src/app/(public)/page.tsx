@@ -2,16 +2,27 @@ import React from "react";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, ArrowRight, MessageSquare } from "lucide-react";
+import { TrendingUp, ChevronRight } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
+import HighlightSlider, { HighlightItem } from "@/components/public/HighlightSlider";
 
 export const revalidate = 0; // Ensure fresh data on every load
 
 export const metadata: Metadata = {
   title: "TerbitKata - Portal Berita Digital Independen Terpercaya",
-  description: "TerbitKata menyajikan berita terkini secara aktual, tepercaya, dan mendalam seputar politik, ekonomi, opini, gaya hidup, dan teknologi.",
-  keywords: ["portal berita", "berita hari ini", "terbitkata", "berita indonesia", "jurnalisme independen"],
+  description:
+    "TerbitKata menyajikan berita terkini secara aktual, tepercaya, dan mendalam seputar politik, ekonomi, opini, gaya hidup, dan teknologi nusantara.",
+  keywords: [
+    "portal berita",
+    "berita hari ini",
+    "terbitkata",
+    "berita indonesia",
+    "jurnalisme independen",
+    "sulawesi",
+    "politik",
+    "ekonomi",
+  ],
   openGraph: {
     title: "TerbitKata - Portal Berita Digital Independen Terpercaya",
     description: "TerbitKata menyajikan berita terkini secara aktual, tepercaya, dan mendalam.",
@@ -35,204 +46,513 @@ export const metadata: Metadata = {
 };
 
 export default async function Homepage() {
-  // Find the featured published article (if any)
-  let heroArticle = await db.article.findFirst({
-    where: {
-      publishedAt: { not: null },
-      isFeatured: true
-    },
+  const defaultThumb =
+    "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80";
+
+  // 1. Fetch categories for category ribbon
+  const categories = await db.category.findMany({
+    orderBy: { name: "asc" },
+    take: 8,
     include: {
-      author: { select: { name: true, avatar: true } },
-      categories: { select: { name: true, slug: true } },
-      _count: { select: { comments: { where: { status: "APPROVED" } } } }
-    }
+      _count: { select: { articles: { where: { publishedAt: { not: null } } } } },
+    },
   });
 
-  // Fetch latest published articles (excluding the hero article if it was found)
-  const gridArticles = await db.article.findMany({
+  // 2. Fetch Highlight Articles (Requirement: Exactly 3 items: 2 manual highlights + 1 most read)
+  // Step A: 2 manual highlights
+  let manualFeatured = await db.article.findMany({
     where: {
       publishedAt: { not: null },
-      ...(heroArticle ? { id: { not: heroArticle.id } } : {})
+      isFeatured: true,
     },
     orderBy: { publishedAt: "desc" },
+    take: 2,
     include: {
       author: { select: { name: true, avatar: true } },
       categories: { select: { name: true, slug: true } },
-      _count: { select: { comments: { where: { status: "APPROVED" } } } }
     },
-    take: heroArticle ? 6 : 7
   });
 
-  const categories = await db.category.findMany({
-    take: 4,
-    include: {
-      _count: { select: { articles: { where: { publishedAt: { not: null } } } } }
-    }
-  });
-
-  // Fallback to the latest article as hero if no specific article is featured
-  if (!heroArticle && gridArticles.length > 0) {
-    heroArticle = gridArticles[0];
-    gridArticles.shift();
+  // If fewer than 2 manual featured, fill from latest published articles
+  if (manualFeatured.length < 2) {
+    const existingIds = manualFeatured.map((a) => a.id);
+    const fillerArticles = await db.article.findMany({
+      where: {
+        publishedAt: { not: null },
+        id: { notIn: existingIds },
+      },
+      orderBy: { publishedAt: "desc" },
+      take: 2 - manualFeatured.length,
+      include: {
+        author: { select: { name: true, avatar: true } },
+        categories: { select: { name: true, slug: true } },
+      },
+    });
+    manualFeatured = [...manualFeatured, ...fillerArticles];
   }
 
-  if (!heroArticle) {
+  // Step B: 1 most read (paling banyak dibaca), excluding manual highlights
+  const manualFeaturedIds = manualFeatured.map((a) => a.id);
+  let mostReadArticle = await db.article.findFirst({
+    where: {
+      publishedAt: { not: null },
+      id: { notIn: manualFeaturedIds },
+    },
+    orderBy: { views: "desc" },
+    include: {
+      author: { select: { name: true, avatar: true } },
+      categories: { select: { name: true, slug: true } },
+    },
+  });
+
+  // If no additional article found, fallback to any available
+  if (!mostReadArticle && manualFeatured.length > 0) {
+    mostReadArticle = manualFeatured[0];
+  }
+
+  // Build the 3 highlights for the 2-second slider
+  const highlightItems: HighlightItem[] = [
+    ...manualFeatured.map((a) => ({
+      id: a.id,
+      title: a.title,
+      slug: a.slug,
+      excerpt: a.excerpt,
+      thumbnail: a.thumbnail,
+      publishedAt: a.publishedAt,
+      views: a.views,
+      highlightType: "PILIHAN UTAMA" as const,
+      author: a.author,
+      categories: a.categories,
+    })),
+    ...(mostReadArticle
+      ? [
+          {
+            id: mostReadArticle.id,
+            title: mostReadArticle.title,
+            slug: mostReadArticle.slug,
+            excerpt: mostReadArticle.excerpt,
+            thumbnail: mostReadArticle.thumbnail,
+            publishedAt: mostReadArticle.publishedAt,
+            views: mostReadArticle.views,
+            highlightType: "PALING BANYAK DIBACA" as const,
+            author: mostReadArticle.author,
+            categories: mostReadArticle.categories,
+          },
+        ]
+      : []),
+  ].slice(0, 3);
+
+  // 3. Fetch ARTIKEL TRENDING (Top 5 articles by views)
+  const trendingArticles = await db.article.findMany({
+    where: { publishedAt: { not: null } },
+    orderBy: { views: "desc" },
+    take: 5,
+    include: {
+      author: { select: { name: true, avatar: true } },
+      categories: { select: { name: true, slug: true } },
+    },
+  });
+
+  // Trending layout: 4 list items on left, 1 main large card on right (Image 3)
+  const topTrending = trendingArticles[0] || highlightItems[0];
+  const sideTrending = trendingArticles.length > 1 ? trendingArticles.slice(1, 5) : trendingArticles;
+
+  // 4. Fetch DARI TERBITKATA PLUS / FOKUS UTAMA (3 articles)
+  const plusArticles = await db.article.findMany({
+    where: { publishedAt: { not: null } },
+    orderBy: { createdAt: "desc" },
+    take: 3,
+    include: {
+      categories: { select: { name: true, slug: true } },
+    },
+  });
+
+  // 5. Fetch ARTIKEL TERBARU (Latest 5 articles)
+  const latestArticles = await db.article.findMany({
+    where: { publishedAt: { not: null } },
+    orderBy: { publishedAt: "desc" },
+    take: 5,
+    include: {
+      author: { select: { name: true, avatar: true } },
+      categories: { select: { name: true, slug: true } },
+    },
+  });
+
+  const mainLatest = latestArticles[0] || highlightItems[0];
+  const sideLatest = latestArticles.length > 1 ? latestArticles.slice(1, 5) : latestArticles;
+
+  // 6. Fetch KOLOM / OPINI (3 articles or opinion pieces)
+  const opinionArticles = await db.article.findMany({
+    where: { publishedAt: { not: null } },
+    orderBy: { publishedAt: "asc" },
+    take: 3,
+    include: {
+      author: { select: { name: true, avatar: true } },
+      categories: { select: { name: true, slug: true } },
+    },
+  });
+
+  if (highlightItems.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center space-y-4">
         <h2 className="text-2xl font-bold">Belum Ada Artikel Dipublikasikan</h2>
-        <p className="text-slate-500 max-w-md mx-auto">Editor kami sedang mempersiapkan berita-berita berkualitas untuk Anda. Kunjungi kembali beberapa saat lagi.</p>
+        <p className="text-slate-500 max-w-md mx-auto">
+          Editor kami sedang mempersiapkan berita-berita berkualitas untuk Anda. Kunjungi kembali
+          beberapa saat lagi.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-      {/* Hero Section (Featured Article) */}
-      <section className="relative rounded-2xl overflow-hidden border border-border bg-card shadow-md">
-        <div className="grid md:grid-cols-2 gap-0">
-          <div className="relative aspect-video md:aspect-auto w-full md:h-full md:min-h-[400px]">
-            <Image
-              src={heroArticle.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80"}
-              alt={heroArticle.title}
-              fill
-              preload
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
-            {heroArticle.categories[0] && (
-              <span className="absolute top-4 left-4 z-10 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                {heroArticle.categories[0].name}
-              </span>
-            )}
-          </div>
-          <div className="p-6 md:p-10 flex flex-col justify-between space-y-6">
-            <div className="space-y-4">
-              <span className="text-xs text-primary font-bold tracking-widest uppercase">Pilihan Utama</span>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 hover:text-primary transition leading-tight">
-                <Link href={`/${heroArticle.categories[0]?.slug || "berita"}/${heroArticle.slug}`}>
-                  {heroArticle.title}
-                </Link>
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3">
-                {heroArticle.excerpt}
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border pt-6">
-              <div className="flex items-center gap-3">
-                <Image
-                  src={heroArticle.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"}
-                  alt={heroArticle.author.name}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 rounded-full border border-slate-200 object-cover"
-                />
-                <div>
-                  <p className="text-xs font-semibold">{heroArticle.author.name}</p>
-                  <p className="text-[10px] text-slate-555 dark:text-slate-400 flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {formatDate(heroArticle.publishedAt!)}
-                  </p>
-                </div>
-              </div>
-
-              <Link
-                href={`/${heroArticle.categories[0]?.slug || "berita"}/${heroArticle.slug}`}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline self-start sm:self-auto"
-              >
-                Baca Selengkapnya <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Bar */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        {categories.map((cat) => (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
+      {/* 1. Category Quick Ribbon (Tempo style sub-nav) */}
+      <div className="border-b border-border pb-3 flex items-center gap-4 sm:gap-6 overflow-x-auto scrollbar-none text-xs font-semibold">
+        <span className="text-red-600 uppercase font-black tracking-wider flex items-center gap-1 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+          Kanal Utama
+        </span>
+        {categories.map((cat, idx) => (
           <Link
             key={cat.id}
             href={`/kategori/${cat.slug}`}
-            className="p-4 rounded-xl border border-border bg-card flex items-center justify-between hover:border-primary dark:hover:border-primary transition"
+            className="text-slate-700 dark:text-slate-300 hover:text-red-600 transition whitespace-nowrap capitalize flex items-center gap-1.5 shrink-0"
           >
-            <div>
-              <h4 className="font-semibold text-sm capitalize">{cat.name}</h4>
-              <p className="text-[10px] text-slate-500 mt-0.5">{cat._count.articles} Berita</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-slate-400" />
+            {idx === 0 && (
+              <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-xs">
+                Baru
+              </span>
+            )}
+            {cat.name}
           </Link>
         ))}
+      </div>
+
+      {/* 2. Headline Carousel (Auto-sliding every 2s, 3 highlights: 2 manual + 1 top read) */}
+      <section aria-label="Sorotan Berita Utama">
+        <HighlightSlider highlights={highlightItems} />
       </section>
 
-      {/* Grid of Latest Articles & Sidebar */}
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Latest Articles */}
-        <section className="lg:col-span-2 space-y-6">
-          <div className="border-b border-border pb-3 flex justify-between items-center">
-            <h3 className="font-bold text-lg text-foreground tracking-tight">Berita Terkini</h3>
-          </div>
+      {/* 3. ARTIKEL TRENDING (Image 3 Section: Left 4 list items, Right 1 large card) */}
+      <section className="space-y-6 pt-2">
+        <div className="border-b-2 border-slate-900 dark:border-white pb-2 flex items-center justify-between">
+          <h2 className="font-black text-lg sm:text-xl tracking-wider uppercase text-slate-900 dark:text-white flex items-center gap-2">
+            <span className="w-3 h-3 bg-red-600 inline-block"></span>
+            Artikel Trending
+          </h2>
+        </div>
 
-          <div className="grid sm:grid-cols-2 gap-6">
-            {gridArticles.map((article) => (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: 4 Trending List Items (6 cols) */}
+          <div className="lg:col-span-6 divide-y divide-border/60">
+            {sideTrending.map((item, index) => (
               <article
-                key={article.id}
-                className="flex flex-col justify-between p-4 rounded-xl border border-border bg-card hover:shadow-md transition"
+                key={item.id}
+                className="py-3.5 first:pt-0 last:pb-0 flex items-start gap-4 group"
               >
-                <div className="space-y-3">
-                  <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
-                    <Image
-                      src={article.thumbnail || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80"}
-                      alt={article.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover"
-                    />
-                    {article.categories[0] && (
-                      <span className="absolute top-2 left-2 z-10 bg-primary text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
-                        {article.categories[0].name}
+                <Link
+                  href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
+                  className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-md overflow-hidden bg-muted border border-border"
+                >
+                  <Image
+                    src={item.thumbnail || defaultThumb}
+                    alt={item.title}
+                    fill
+                    sizes="96px"
+                    className="object-cover group-hover:scale-105 transition duration-300"
+                  />
+                  <span className="absolute bottom-1 left-1 bg-red-600 text-white font-black text-[10px] w-5 h-5 rounded-xs flex items-center justify-center">
+                    {index + 1}
+                  </span>
+                </Link>
+
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-red-600 transition leading-snug line-clamp-2">
+                    <Link
+                      href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
+                      className="flex items-start gap-1.5"
+                    >
+                      <span className="text-red-600 font-black text-xs inline-block shrink-0 mt-0.5">
+                        ■
+                      </span>
+                      <span>{item.title}</span>
+                    </Link>
+                  </h3>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    {item.categories[0] && (
+                      <span className="font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[10px]">
+                        {item.categories[0].name}
                       </span>
                     )}
-                  </div>
-                  <h4 className="font-bold text-base text-slate-900 hover:text-primary transition line-clamp-2 leading-snug">
-                    <Link href={`/${article.categories[0]?.slug || "berita"}/${article.slug}`}>
-                      {article.title}
-                    </Link>
-                  </h4>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs line-clamp-2 leading-relaxed">
-                    {article.excerpt}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-border pt-4 mt-4 text-[10px] text-muted-foreground">
-                  <span className="font-semibold text-foreground">{article.author.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {formatDate(article.publishedAt!)}</span>
-                    {article._count.comments > 0 && (
-                      <span className="flex items-center gap-0.5 text-primary"><MessageSquare className="h-3 w-3" /> {article._count.comments}</span>
-                    )}
+                    {item.publishedAt && <span>• {formatDate(item.publishedAt)}</span>}
                   </div>
                 </div>
               </article>
             ))}
           </div>
-        </section>
 
-        {/* Sidebar */}
-        <aside className="space-y-6">
-          <div className="p-5 rounded-2xl border border-border bg-card space-y-4">
-            <h3 className="font-bold text-sm text-foreground uppercase tracking-wider">Misi TerbitKata</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Kami berkomitmen untuk mempersembahkan informasi akurat dan seimbang kepada seluruh masyarakat, demi terwujudnya ruang publik yang sehat dan beradab.
+          {/* Right Column: Featured Trending Story with Big Photo (6 cols) */}
+          {topTrending && (
+            <div className="lg:col-span-6 bg-card border border-border rounded-2xl overflow-hidden group hover:shadow-md transition">
+              <Link
+                href={`/${topTrending.categories[0]?.slug || "berita"}/${topTrending.slug}`}
+                className="relative aspect-[16/10] w-full block overflow-hidden"
+              >
+                <Image
+                  src={topTrending.thumbnail || defaultThumb}
+                  alt={topTrending.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover group-hover:scale-103 transition duration-500"
+                />
+                <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm shadow-sm flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" /> Trending Top #1
+                </span>
+              </Link>
+
+              <div className="p-5 sm:p-6 space-y-3">
+                <h3 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-red-600 transition leading-tight">
+                  <Link
+                    href={`/${topTrending.categories[0]?.slug || "berita"}/${topTrending.slug}`}
+                    className="flex items-start gap-2"
+                  >
+                    <span className="text-red-600 font-black text-sm inline-block shrink-0 mt-1">
+                      ■
+                    </span>
+                    <span>{topTrending.title}</span>
+                  </Link>
+                </h3>
+
+                <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                  {topTrending.excerpt}
+                </p>
+
+                <div className="pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground">
+                    {topTrending.author?.name}
+                  </span>
+                  <span>{topTrending.views ?? 0} kali dibaca</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 4. DARI TERBITKATA PLUS (Dark Banner Section - Matches Image 3 "DARI TEMPO PLUS") */}
+      <section className="rounded-2xl bg-slate-950 text-white p-6 sm:p-8 space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 bg-red-600 inline-block"></span>
+            <h2 className="font-black text-base sm:text-lg uppercase tracking-wider text-white">
+              Dari TerbitKata Plus
+            </h2>
+          </div>
+          <Link
+            href="/kategori/investasi"
+            className="text-xs font-bold text-slate-400 hover:text-red-500 transition flex items-center gap-1"
+          >
+            Jelajahi TerbitKata Plus <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {plusArticles.map((item) => (
+            <article key={item.id} className="space-y-3 group">
+              <Link
+                href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
+                className="relative aspect-video w-full rounded-xl overflow-hidden block bg-slate-900 border border-slate-800"
+              >
+                <Image
+                  src={item.thumbnail || defaultThumb}
+                  alt={item.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover group-hover:scale-105 transition duration-500"
+                />
+                {item.categories[0] && (
+                  <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-xs">
+                    {item.categories[0].name}
+                  </span>
+                )}
+              </Link>
+              <h3 className="font-bold text-sm sm:text-base text-slate-100 group-hover:text-red-400 transition leading-snug line-clamp-2">
+                <Link href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}>
+                  {item.title}
+                </Link>
+              </h3>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* 5. ARTIKEL TERBARU (Matches Image 3 Section: Left Big Article, Right 4 Stacks) */}
+      <section className="space-y-6">
+        <div className="border-b-2 border-slate-900 dark:border-white pb-2 flex items-center justify-between">
+          <h2 className="font-black text-lg sm:text-xl tracking-wider uppercase text-slate-900 dark:text-white flex items-center gap-2">
+            <span className="w-3 h-3 bg-red-600 inline-block"></span>
+            Artikel Terbaru
+          </h2>
+          <Link
+            href="/search"
+            className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
+          >
+            Selengkapnya <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Big Featured Recent Article (6 cols) */}
+          {mainLatest && (
+            <div className="lg:col-span-6 bg-card border border-border rounded-2xl overflow-hidden group hover:shadow-md transition">
+              <Link
+                href={`/${mainLatest.categories[0]?.slug || "berita"}/${mainLatest.slug}`}
+                className="relative aspect-[16/10] w-full block overflow-hidden"
+              >
+                <Image
+                  src={mainLatest.thumbnail || defaultThumb}
+                  alt={mainLatest.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover group-hover:scale-103 transition duration-500"
+                />
+                {mainLatest.categories[0] && (
+                  <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-sm shadow-sm">
+                    {mainLatest.categories[0].name}
+                  </span>
+                )}
+              </Link>
+
+              <div className="p-5 sm:p-6 space-y-3">
+                <h3 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-primary transition leading-tight">
+                  <Link
+                    href={`/${mainLatest.categories[0]?.slug || "berita"}/${mainLatest.slug}`}
+                    className="flex items-start gap-2"
+                  >
+                    <span className="text-red-600 font-black text-sm inline-block shrink-0 mt-1">
+                      ■
+                    </span>
+                    <span>{mainLatest.title}</span>
+                  </Link>
+                </h3>
+
+                <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm line-clamp-3 leading-relaxed">
+                  {mainLatest.excerpt}
+                </p>
+
+                <div className="pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground">
+                    {mainLatest.author?.name}
+                  </span>
+                  {mainLatest.publishedAt && (
+                    <span>{formatDate(mainLatest.publishedAt)}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Right Column: 4 Recent Stacked Articles with Thumbnails (6 cols) */}
+          <div className="lg:col-span-6 divide-y divide-border/60">
+            {sideLatest.map((item) => (
+              <article
+                key={item.id}
+                className="py-3.5 first:pt-0 last:pb-0 flex items-start gap-4 group"
+              >
+                <Link
+                  href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
+                  className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-md overflow-hidden bg-muted border border-border"
+                >
+                  <Image
+                    src={item.thumbnail || defaultThumb}
+                    alt={item.title}
+                    fill
+                    sizes="96px"
+                    className="object-cover group-hover:scale-105 transition duration-300"
+                  />
+                </Link>
+
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-primary transition leading-snug line-clamp-2">
+                    <Link
+                      href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
+                      className="flex items-start gap-1.5"
+                    >
+                      <span className="text-red-600 font-black text-xs inline-block shrink-0 mt-0.5">
+                        ■
+                      </span>
+                      <span>{item.title}</span>
+                    </Link>
+                  </h3>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    {item.categories[0] && (
+                      <span className="font-semibold text-primary uppercase tracking-wider text-[10px]">
+                        {item.categories[0].name}
+                      </span>
+                    )}
+                    {item.publishedAt && <span>• {formatDate(item.publishedAt)}</span>}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. KOLOM / MATERI OPINI (Matches Image 3 Bottom Section: KOLOM) */}
+      <section className="space-y-4 pt-4 border-t border-border">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <h2 className="font-black text-lg sm:text-xl tracking-wider uppercase text-slate-900 dark:text-white flex items-center gap-2">
+              <span className="w-3 h-3 bg-red-600 inline-block"></span>
+              Kolom Opini
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Perspektif yang tajam dan apik dari para pakar dan jurnalis TerbitKata
             </p>
           </div>
+          <Link
+            href="/kategori/opini"
+            className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1"
+          >
+            Kolom Lain <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
 
-          <div className="p-5 rounded-2xl border border-border bg-card space-y-4">
-            <h3 className="font-bold text-sm text-foreground uppercase tracking-wider">Materi Opini</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Tertarik untuk berkontribusi mengirimkan opini Anda? Hubungi redaksi TerbitKata di <strong>redaksi@terbitkata.com</strong>.
-            </p>
-          </div>
-        </aside>
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
+          {opinionArticles.map((item, idx) => (
+            <div
+              key={item.id}
+              className="p-4 rounded-xl border border-border bg-card space-y-3 hover:border-red-600/40 transition"
+            >
+              <div className="flex items-center gap-3">
+                <Image
+                  src={
+                    item.author.avatar ||
+                    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"
+                  }
+                  alt={item.author.name}
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full border border-slate-200 object-cover shrink-0"
+                />
+                <div className="min-w-0">
+                  <h4 className="font-bold text-xs sm:text-sm text-foreground truncate">
+                    {item.author.name}
+                  </h4>
+                  <p className="text-[10px] text-muted-foreground">Kolumnis TerbitKata</p>
+                </div>
+              </div>
+
+              <h3 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 hover:text-red-600 transition line-clamp-2 leading-snug">
+                <Link href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}>
+                  {item.title}
+                </Link>
+              </h3>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

@@ -29,10 +29,10 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "SUPER_ADMIN") {
+    if (!session) {
       return NextResponse.json(
-        { error: "Forbidden: Hanya Super Admin yang dapat membuat kategori" },
-        { status: 403 }
+        { error: "Unauthorized: Silakan login terlebih dahulu" },
+        { status: 401 }
       );
     }
 

@@ -294,4 +294,14 @@ body {
   text-decoration: underline;
   text-underline-offset: 3px;
   font-weight: 600;
-}
+}
+
+@keyframes progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+

@@ -916,7 +916,7 @@ export default function RichTextEditor({
                     }`}
                   >
                     <BookOpen className="h-3 w-3" />
-                    <span>Kotak "Baca Juga"</span>
+                    <span>Kotak &quot;Baca Juga&quot;</span>
                   </button>
                   <button
                     type="button"

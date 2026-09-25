@@ -28,7 +28,7 @@ export default function NewsletterForm() {
       } else {
         alert(data.error || "Gagal berlangganan.");
       }
-    } catch (err) {
+    } catch {
       alert("Terjadi kesalahan koneksi.");
     } finally {
       setSubmitting(false);

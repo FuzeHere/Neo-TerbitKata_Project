@@ -15,7 +15,7 @@ interface CommentSectionProps {
 }
 
 export default function CommentSection({ articleId, initialComments, authorName }: CommentSectionProps) {
-  const [comments, setComments] = useState(initialComments);
+  const comments = initialComments;
 
   // Main Form State
   const [name, setName] = useState("");
@@ -50,7 +50,7 @@ export default function CommentSection({ articleId, initialComments, authorName 
         setCaptchaQuestion(data.question);
         setCaptchaToken(data.token);
       }
-    } catch (err) {
+    } catch {
       console.error("Gagal memuat CAPTCHA");
     } finally {
       setLoadingCaptcha(false);
@@ -67,7 +67,7 @@ export default function CommentSection({ articleId, initialComments, authorName 
         setReplyCaptchaQuestion(data.question);
         setReplyCaptchaToken(data.token);
       }
-    } catch (err) {
+    } catch {
       console.error("Gagal memuat CAPTCHA");
     } finally {
       setReplyLoadingCaptcha(false);
@@ -75,7 +75,23 @@ export default function CommentSection({ articleId, initialComments, authorName 
   };
 
   useEffect(() => {
-    fetchCaptcha();
+    let isMounted = true;
+    const initCaptcha = async () => {
+      try {
+        const res = await fetch("/api/comments/captcha");
+        const data = await res.json();
+        if (res.ok && isMounted) {
+          setCaptchaQuestion(data.question);
+          setCaptchaToken(data.token);
+        }
+      } catch {
+        console.error("Gagal memuat CAPTCHA");
+      }
+    };
+    initCaptcha();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleReplyClick = (commentId: string) => {
@@ -131,7 +147,7 @@ export default function CommentSection({ articleId, initialComments, authorName 
       } else {
         setStatusMessage({ type: "error", text: data.error || "Gagal mengirim komentar." });
       }
-    } catch (err) {
+    } catch {
       setStatusMessage({ type: "error", text: "Terjadi kesalahan koneksi sistem." });
     } finally {
       setSubmitting(false);
@@ -183,7 +199,7 @@ export default function CommentSection({ articleId, initialComments, authorName 
       } else {
         setReplyStatusMessage({ type: "error", text: data.error || "Gagal mengirim balasan." });
       }
-    } catch (err) {
+    } catch {
       setReplyStatusMessage({ type: "error", text: "Terjadi kesalahan koneksi sistem." });
     } finally {
       setReplySubmitting(false);

@@ -33,7 +33,7 @@ describe("Article View Tracker - 10 Second Dwell Time Logic", () => {
     };
 
     // Simulate mounting tracker
-    const timer = setTimeout(recordView, 10000);
+    setTimeout(recordView, 10000);
 
     // Reader stays for 9.9 seconds - not yet recorded
     vi.advanceTimersByTime(9900);

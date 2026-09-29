@@ -114,10 +114,10 @@ export default async function AdminLayout({
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Header (Mobile menu trigger + Title) */}
-          <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-6">
+          <header className="h-14 sm:h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-3 sm:px-6">
             <div className="flex items-center md:hidden gap-3">
               <Link href="/admin" className="flex items-center">
-                <img src="/logo.png" alt="TerbitKata Logo" className="h-8 w-auto object-contain" />
+                <img src="/logo.png" alt="TerbitKata Logo" className="h-7 sm:h-8 w-auto object-contain" />
               </Link>
             </div>
             
@@ -134,8 +134,8 @@ export default async function AdminLayout({
           </header>
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto p-6 md:p-8">
-            <div className="max-w-6xl mx-auto space-y-8">
+          <main className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-8">
+            <div className="max-w-6xl mx-auto space-y-4 sm:space-y-8">
               {children}
             </div>
           </main>

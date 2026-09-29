@@ -108,7 +108,7 @@ export default function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "tiptap min-h-[380px] p-4 sm:p-6 focus:outline-none text-slate-800 dark:text-slate-200 text-base sm:text-lg leading-relaxed"
+          "tiptap min-h-[250px] sm:min-h-[380px] p-3.5 sm:p-6 focus:outline-none text-slate-800 dark:text-slate-200 text-sm sm:text-base leading-relaxed"
       }
     }
   });
@@ -514,200 +514,196 @@ export default function RichTextEditor({
 
       {/* Main Top Sticky & Horizontally Scrollable Toolbar */}
       <div className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center justify-between gap-2 p-1.5 sm:p-2">
+        <div className="flex items-center justify-between gap-1.5 p-1.5 sm:p-2">
           {/* Main Editing Tools (Scrollable on mobile) */}
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 max-w-[calc(100%-80px)] sm:max-w-none">
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 flex-1 min-w-0">
             {/* Heading Group */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().setParagraph().run()}
-              className={`px-2.5 h-8 rounded-lg text-xs font-semibold shrink-0 transition cursor-pointer flex items-center gap-1 ${
+              className={`h-7 px-2 sm:h-8 sm:px-2.5 rounded-md sm:rounded-lg text-xs font-semibold shrink-0 transition cursor-pointer flex items-center justify-center ${
                 editor.isActive("paragraph") && !editor.isActive("heading")
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
-              title="Paragraf Normal"
+              title="Paragraf Normal (P)"
             >
-              <Pilcrow className="h-3.5 w-3.5" />
-              <span>P</span>
+              P
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-              className={`px-2.5 h-8 rounded-lg text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1 ${
+              className={`h-7 px-2 sm:h-8 sm:px-2.5 rounded-md sm:rounded-lg text-xs font-bold shrink-0 transition cursor-pointer flex items-center justify-center ${
                 editor.isActive("heading", { level: 1 })
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
-              title="Heading 1"
+              title="Heading 1 (H1)"
             >
-              <Heading1 className="h-3.5 w-3.5" />
-              <span>H1</span>
+              H1
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-              className={`px-2.5 h-8 rounded-lg text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1 ${
+              className={`h-7 px-2 sm:h-8 sm:px-2.5 rounded-md sm:rounded-lg text-xs font-bold shrink-0 transition cursor-pointer flex items-center justify-center ${
                 editor.isActive("heading", { level: 2 })
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
-              title="Heading 2"
+              title="Heading 2 (H2)"
             >
-              <Heading2 className="h-3.5 w-3.5" />
-              <span>H2</span>
+              H2
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-              className={`px-2.5 h-8 rounded-lg text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1 ${
+              className={`h-7 px-2 sm:h-8 sm:px-2.5 rounded-md sm:rounded-lg text-xs font-bold shrink-0 transition cursor-pointer flex items-center justify-center ${
                 editor.isActive("heading", { level: 3 })
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
-              title="Heading 3"
+              title="Heading 3 (H3)"
             >
-              <Heading3 className="h-3.5 w-3.5" />
-              <span>H3</span>
+              H3
             </button>
 
-            <div className="w-[1px] h-5 bg-slate-200 dark:bg-slate-800 mx-1 shrink-0" />
+            <div className="w-[1px] h-4 sm:h-5 bg-slate-200 dark:bg-slate-800 mx-0.5 sm:mx-1 shrink-0" />
 
             {/* Inline Formatting */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleBold().run()}
-              className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("bold")
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
               title="Tebal (Bold)"
             >
-              <Bold className="h-4 w-4" />
+              <Bold className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("italic")
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
               title="Miring (Italic)"
             >
-              <Italic className="h-4 w-4" />
+              <Italic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("underline")
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
               title="Garis Bawah (Underline)"
             >
-              <UnderlineIcon className="h-4 w-4" />
+              <UnderlineIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleStrike().run()}
-              className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("strike")
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
               title="Coret (Strikethrough)"
             >
-              <Strikethrough className="h-4 w-4" />
+              <Strikethrough className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
 
-            <div className="w-[1px] h-5 bg-slate-200 dark:bg-slate-800 mx-1 shrink-0" />
+            <div className="w-[1px] h-4 sm:h-5 bg-slate-200 dark:bg-slate-800 mx-0.5 sm:mx-1 shrink-0" />
 
             {/* Lists & Quotes */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleBulletList().run()}
-              className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("bulletList")
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
               title="Daftar Poin (Bullet List)"
             >
-              <List className="h-4 w-4" />
+              <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("orderedList")
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
               title="Daftar Angka (Ordered List)"
             >
-              <ListOrdered className="h-4 w-4" />
+              <ListOrdered className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
-              className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("blockquote")
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
               title="Kutipan (Blockquote)"
             >
-              <Quote className="h-4 w-4" />
+              <Quote className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().setHorizontalRule().run()}
-              className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               title="Garis Pembatas (Horizontal Line)"
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
 
-            <div className="w-[1px] h-5 bg-slate-200 dark:bg-slate-800 mx-1 shrink-0" />
+            <div className="w-[1px] h-4 sm:h-5 bg-slate-200 dark:bg-slate-800 mx-0.5 sm:mx-1 shrink-0" />
 
             {/* Standard Link */}
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={openLinkModal}
-              className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center transition cursor-pointer ${
                 editor.isActive("link")
                   ? "bg-primary text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
               title="Sisipkan Link URL"
             >
-              <LinkIcon className="h-4 w-4" />
+              <LinkIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             {editor.isActive("link") && (
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={removeLink}
-                className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
                 title="Hapus Link"
               >
-                <Unlink className="h-4 w-4" />
+                <Unlink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </button>
             )}
 
@@ -716,15 +712,15 @@ export default function RichTextEditor({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={openArticleModal}
-              className="px-2.5 h-8 rounded-lg shrink-0 flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition cursor-pointer border border-primary/20"
+              className="h-7 px-2 sm:h-8 sm:px-2.5 rounded-md sm:rounded-lg shrink-0 flex items-center gap-1 sm:gap-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition cursor-pointer border border-primary/20"
               title="Tautkan Berita Terkait ('Baca Juga')"
             >
               <Newspaper className="h-3.5 w-3.5 text-primary" />
               <span className="hidden sm:inline">Tautkan Berita</span>
-              <span className="sm:hidden">Baca Juga</span>
+              <span className="sm:hidden text-[11px]">Baca Juga</span>
             </button>
 
-            <div className="w-[1px] h-5 bg-slate-200 dark:bg-slate-800 mx-1 shrink-0" />
+            <div className="w-[1px] h-4 sm:h-5 bg-slate-200 dark:bg-slate-800 mx-0.5 sm:mx-1 shrink-0" />
 
             {/* Undo / Redo */}
             <button
@@ -732,20 +728,20 @@ export default function RichTextEditor({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().undo()}
-              className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
               title="Undo"
             >
-              <Undo className="h-4 w-4" />
+              <Undo className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().redo().run()}
               disabled={!editor.can().redo()}
-              className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg shrink-0 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
               title="Redo"
             >
-              <Redo className="h-4 w-4" />
+              <Redo className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
           </div>
 
@@ -753,7 +749,7 @@ export default function RichTextEditor({
           <button
             type="button"
             onClick={handleToggleHtmlMode}
-            className={`px-2.5 h-8 rounded-lg text-xs font-semibold shrink-0 transition flex items-center gap-1.5 cursor-pointer border ${
+            className={`h-7 px-2 sm:h-8 sm:px-2.5 rounded-md sm:rounded-lg text-xs font-semibold shrink-0 transition flex items-center gap-1 cursor-pointer border ${
               isHtmlMode
                 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-transparent hover:border-slate-300 dark:hover:border-slate-700"
@@ -763,12 +759,12 @@ export default function RichTextEditor({
             {isHtmlMode ? (
               <>
                 <Eye className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Mode Visual</span>
+                <span className="hidden sm:inline">Visual</span>
               </>
             ) : (
               <>
                 <Code className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Kode HTML</span>
+                <span className="hidden sm:inline">HTML</span>
               </>
             )}
           </button>

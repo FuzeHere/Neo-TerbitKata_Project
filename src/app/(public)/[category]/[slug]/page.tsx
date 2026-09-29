@@ -184,31 +184,25 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
         }}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Main Article Column (Matches Image 1 Left Side) */}
-          <article className="lg:col-span-8 space-y-6">
-            {/* Top Category and Badges */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/kategori/${primaryCategory.slug}`}
-                  className="text-xs font-bold text-red-600 hover:underline uppercase tracking-wider"
-                >
-                  {primaryCategory.name}
-                </Link>
-              </div>
-
-              {/* INFO TERBITKATA Badge */}
-              <div className="pt-0.5">
-                <span className="inline-block bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-sm tracking-wider uppercase">
-                  INFO TERBITKATA
-                </span>
-              </div>
+          <article className="lg:col-span-8 space-y-5 sm:space-y-6">
+            {/* Top Category and Badges - Symmetrical inline pills */}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <Link
+                href={`/kategori/${primaryCategory.slug}`}
+                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary text-white hover:bg-primary/90 transition uppercase tracking-wider shadow-xs"
+              >
+                {primaryCategory.name}
+              </Link>
+              <span className="inline-flex items-center bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wider uppercase">
+                INFO TERBITKATA
+              </span>
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white leading-[1.25] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white leading-[1.28] tracking-tight">
               {article.title}
             </h1>
 
@@ -261,22 +255,24 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 </figure>
               )}
 
-              {/* Author byline */}
-              <div className="flex items-center gap-3 py-3 border-y border-border">
-                <Image
-                  src={article.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"}
-                  alt={article.author.name}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 rounded-full border border-slate-200 object-cover shrink-0"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                    {article.author.name}
-                  </p>
-                  <p className="text-[10px] text-slate-500">Jurnalis TerbitKata</p>
+              {/* Author byline & Mobile Share Row */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-3.5 border-y border-border">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Image
+                    src={article.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"}
+                    alt={article.author.name}
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-full border border-slate-200 dark:border-slate-700 object-cover shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                      {article.author.name}
+                    </p>
+                    <p className="text-xs text-slate-500">Jurnalis TerbitKata</p>
+                  </div>
                 </div>
-                <div className="sm:hidden">
+                <div className="sm:hidden pt-2.5 border-t border-dashed border-border/70 w-full">
                   <ShareButtons title={article.title} url={articleUrl} />
                 </div>
               </div>

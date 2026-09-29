@@ -186,50 +186,54 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-3">
+    <form onSubmit={handleSubmit} className="grid gap-4 sm:gap-6 md:grid-cols-3">
       {/* Left Column: Form Fields */}
-      <div className="md:col-span-2 space-y-6">
+      <div className="md:col-span-2 space-y-4 sm:space-y-6">
         {error && (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-lg p-4 text-sm font-medium">
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-lg p-3 sm:p-4 text-xs sm:text-sm font-medium">
             {error}
           </div>
         )}
 
         <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-          <CardContent className="pt-6 space-y-4">
+          <CardContent className="p-3.5 sm:p-6 space-y-3.5 sm:space-y-4">
             {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title" className="font-semibold text-slate-700 dark:text-slate-350">Judul Artikel</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="title" className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Judul Artikel
+              </Label>
               <Input
                 id="title"
                 required
                 placeholder="Masukkan judul artikel yang menarik..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="bg-transparent border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-base py-5"
+                className="bg-transparent border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-sm sm:text-base py-2.5 sm:py-3 h-auto"
               />
             </div>
 
             {/* Excerpt */}
-            <div className="space-y-2">
-              <Label htmlFor="excerpt" className="font-semibold text-slate-700 dark:text-slate-355">Ringkasan / Excerpt</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="excerpt" className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Ringkasan / Excerpt
+              </Label>
               <Textarea
                 id="excerpt"
                 placeholder="Tulis ringkasan singkat artikel untuk halaman depan..."
                 value={excerpt}
                 onChange={(e) => setExcerpt(e.target.value)}
-                className="min-h-[80px] bg-transparent border-slate-200 dark:border-slate-800 focus-visible:ring-primary"
+                className="min-h-[64px] sm:min-h-[80px] text-xs sm:text-sm bg-transparent border-slate-200 dark:border-slate-800 focus-visible:ring-primary"
               />
             </div>
 
             {/* Content Body */}
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="content" className="font-semibold text-slate-700 dark:text-slate-300">
+                <Label htmlFor="content" className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                   Isi Artikel
                 </Label>
-                <span className="text-xs text-slate-400">
-                  WYSIWYG Editor (Mendukung Heading, List, Link &amp; Baca Juga)
+                <span className="text-[11px] sm:text-xs text-slate-400">
+                  Editor Berita WYSIWYG
                 </span>
               </div>
               <RichTextEditor
@@ -243,13 +247,13 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
       </div>
 
       {/* Right Column: Settings & Meta */}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Publish Action Card */}
         <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-base font-bold">Publikasi & Sorotan</CardTitle>
+          <CardHeader className="p-3.5 sm:p-6 pb-2 sm:pb-3">
+            <CardTitle className="text-sm sm:text-base font-bold">Publikasi & Sorotan</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-3.5 sm:p-6 pt-0 space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Status Publikasi</span>
               <div className="flex items-center gap-2">
@@ -313,10 +317,10 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
 
         {/* Thumbnail Card */}
         <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-base font-bold">Thumbnail / Gambar</CardTitle>
+          <CardHeader className="p-3.5 sm:p-6 pb-2 sm:pb-3">
+            <CardTitle className="text-sm sm:text-base font-bold">Thumbnail / Gambar</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-3.5 sm:p-6 pt-0 space-y-3 sm:space-y-4">
             {thumbnail ? (
               <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
                 <img src={thumbnail} alt="Thumbnail preview" className="object-cover w-full h-full" />
@@ -329,12 +333,12 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
                 </button>
               </div>
             ) : (
-              <div className="border-2 border-dashed border-slate-350 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center gap-2 text-center bg-slate-50/50 dark:bg-slate-950/20">
+              <div className="border-2 border-dashed border-slate-350 dark:border-slate-700 rounded-lg p-4 sm:p-6 flex flex-col items-center justify-center gap-1.5 sm:gap-2 text-center bg-slate-50/50 dark:bg-slate-950/20">
                 {uploading ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-slate-450" />
+                  <Loader2 className="h-7 w-7 animate-spin text-slate-450" />
                 ) : (
                   <>
-                    <Upload className="h-8 w-8 text-slate-400" />
+                    <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" />
                     <Label
                       htmlFor="file-upload"
                       className="text-xs font-semibold text-primary hover:underline cursor-pointer"
@@ -382,9 +386,9 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
 
         {/* Categories Card */}
         <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+          <CardHeader className="p-3.5 sm:p-6 pb-2 sm:pb-3 flex flex-row items-center justify-between space-y-0">
             <div>
-              <CardTitle className="text-base font-bold">Kategori</CardTitle>
+              <CardTitle className="text-sm sm:text-base font-bold">Kategori</CardTitle>
               <p className="text-[10px] text-slate-500 mt-0.5">
                 {selectedCategories.length} kategori dipilih
               </p>
@@ -401,7 +405,7 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
               {showAddCategory ? "Tutup" : "Kategori Baru"}
             </button>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="p-3.5 sm:p-6 pt-0 space-y-3">
             {/* Inline Add Category Form */}
             {showAddCategory && (
               <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2.5 animate-in fade-in duration-150">
@@ -490,7 +494,7 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
                 categoryList.map((cat) => (
                   <label
                     key={cat.id}
-                    className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-primary transition cursor-pointer py-0.5"
+                    className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-primary transition cursor-pointer py-0.5"
                   >
                     <input
                       type="checkbox"
@@ -508,12 +512,12 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
 
         {/* Tags Card */}
         <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-base font-bold">Tag Berita</CardTitle>
+          <CardHeader className="p-3.5 sm:p-6 pb-2 sm:pb-3">
+            <CardTitle className="text-sm sm:text-base font-bold">Tag Berita</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 max-h-48 overflow-y-auto pr-1">
+          <CardContent className="p-3.5 sm:p-6 pt-0 space-y-2 max-h-48 overflow-y-auto pr-1">
             {tags.map((tag) => (
-              <label key={tag.id} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+              <label key={tag.id} className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedTags.includes(tag.id)}

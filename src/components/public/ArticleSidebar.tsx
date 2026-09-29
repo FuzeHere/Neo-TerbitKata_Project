@@ -104,12 +104,8 @@ export default function ArticleSidebar({
                 <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 group-hover:text-primary transition line-clamp-3 leading-snug">
                   <Link
                     href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
-                    className="flex items-start gap-1"
                   >
-                    <span className="text-primary font-extrabold text-xs inline-block shrink-0 mt-0.5">
-                      ■
-                    </span>
-                    <span>{item.title}</span>
+                    {item.title}
                   </Link>
                 </h4>
                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground">

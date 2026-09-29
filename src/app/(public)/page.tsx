@@ -239,12 +239,8 @@ export default async function Homepage() {
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-primary transition leading-snug line-clamp-2">
                     <Link
                       href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
-                      className="flex items-start gap-1.5"
                     >
-                      <span className="text-primary font-black text-xs inline-block shrink-0 mt-0.5">
-                        ■
-                      </span>
-                      <span>{item.title}</span>
+                      {item.title}
                     </Link>
                   </h3>
                   <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -283,12 +279,8 @@ export default async function Homepage() {
                 <h3 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-primary transition leading-tight">
                   <Link
                     href={`/${topTrending.categories[0]?.slug || "berita"}/${topTrending.slug}`}
-                    className="flex items-start gap-2"
                   >
-                    <span className="text-primary font-black text-sm inline-block shrink-0 mt-1">
-                      ■
-                    </span>
-                    <span>{topTrending.title}</span>
+                    {topTrending.title}
                   </Link>
                 </h3>
 
@@ -396,12 +388,8 @@ export default async function Homepage() {
                 <h3 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-primary transition leading-tight">
                   <Link
                     href={`/${mainLatest.categories[0]?.slug || "berita"}/${mainLatest.slug}`}
-                    className="flex items-start gap-2"
                   >
-                    <span className="text-primary font-black text-sm inline-block shrink-0 mt-1">
-                      ■
-                    </span>
-                    <span>{mainLatest.title}</span>
+                    {mainLatest.title}
                   </Link>
                 </h3>
 
@@ -445,12 +433,8 @@ export default async function Homepage() {
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-primary transition leading-snug line-clamp-2">
                     <Link
                       href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}
-                      className="flex items-start gap-1.5"
                     >
-                      <span className="text-primary font-black text-xs inline-block shrink-0 mt-0.5">
-                        ■
-                      </span>
-                      <span>{item.title}</span>
+                      {item.title}
                     </Link>
                   </h3>
                   <div className="flex items-center gap-2 text-[11px] text-muted-foreground">

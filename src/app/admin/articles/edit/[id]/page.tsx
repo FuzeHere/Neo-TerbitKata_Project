@@ -31,6 +31,11 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
     notFound();
   }
 
+  // Articles in trash cannot be edited until restored
+  if (article.deletedAt) {
+    redirect(role === "SUPER_ADMIN" ? "/admin/trash" : "/admin/articles");
+  }
+
   // Permission check: WRITER cannot edit other people's articles
   if (role === "WRITER" && article.authorId !== userId) {
     redirect("/admin/articles");

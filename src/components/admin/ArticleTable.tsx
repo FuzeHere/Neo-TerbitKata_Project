@@ -10,9 +10,10 @@ import { useRouter } from "next/navigation";
 
 interface ArticleTableProps {
   initialArticles: any[];
+  userRole?: string;
 }
 
-export default function ArticleTable({ initialArticles }: ArticleTableProps) {
+export default function ArticleTable({ initialArticles, userRole }: ArticleTableProps) {
   const [articles, setArticles] = useState(initialArticles);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -29,7 +30,12 @@ export default function ArticleTable({ initialArticles }: ArticleTableProps) {
   });
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus artikel ini secara permanen?")) {
+    const confirmMsg =
+      userRole === "WRITER"
+        ? "Apakah Anda yakin ingin menghapus artikel ini?\n\nArtikel akan segera ditarik dari web publik dan masuk ke kotak sampah akun admin untuk persetujuan penghapusan."
+        : "Apakah Anda yakin ingin memindahkan artikel ini ke kotak sampah?\n\nArtikel akan ditarik dari web dan dapat dipulihkan atau dihapus permanen oleh admin.";
+
+    if (!confirm(confirmMsg)) {
       return;
     }
 
@@ -43,10 +49,10 @@ export default function ArticleTable({ initialArticles }: ArticleTableProps) {
 
       if (response.ok) {
         setArticles(articles.filter((art) => art.id !== id));
-        alert("Artikel berhasil dihapus.");
+        alert(data.message || "Artikel berhasil diproses.");
         router.refresh();
       } else {
-        alert(data.error || "Gagal menghapus artikel.");
+        alert(data.error || "Gagal memproses penghapusan artikel.");
       }
     } catch (error) {
       alert("Terjadi kesalahan koneksi saat menghapus.");

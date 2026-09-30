@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
     },
   });
 
-  if (!article) {
+  if (!article || !article.publishedAt || article.deletedAt) {
     return {
       title: "Artikel Tidak Ditemukan - TerbitKata",
     };
@@ -96,7 +96,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     }
   });
 
-  if (!article || !article.publishedAt) {
+  if (!article || !article.publishedAt || article.deletedAt) {
     notFound();
   }
 
@@ -105,6 +105,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     db.article.findMany({
       where: {
         publishedAt: { not: null },
+        deletedAt: null,
         id: { not: article.id }
       },
       orderBy: { publishedAt: "desc" },
@@ -122,6 +123,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     db.article.findMany({
       where: {
         publishedAt: { not: null },
+        deletedAt: null,
         id: { not: article.id }
       },
       orderBy: { views: "desc" },

@@ -6,7 +6,7 @@ export const revalidate = 3600; // Cache for 1 hour
 
 export async function GET() {
   const articles = await db.article.findMany({
-    where: { publishedAt: { not: null } },
+    where: { publishedAt: { not: null }, deletedAt: null },
     orderBy: { publishedAt: "desc" },
     include: {
       categories: { select: { name: true, slug: true } },

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
+import { cleanupExpiredTrash } from "@/lib/trash";
 
 const createArticleSchema = z.object({
   title: z.string().trim().min(3, "Judul artikel minimal 3 karakter").max(200, "Judul artikel maksimal 200 karakter"),
@@ -19,6 +20,9 @@ const createArticleSchema = z.object({
 
 export async function GET(req: Request) {
   try {
+    // Automatically purge expired trash (> 3 days)
+    cleanupExpiredTrash().catch(console.error);
+
     const { searchParams } = new URL(req.url);
     const categorySlug = searchParams.get("category");
     const tagSlug = searchParams.get("tag");
@@ -28,7 +32,9 @@ export async function GET(req: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: any = {
+      deletedAt: null, // Exclude articles in trash from general API queries
+    };
 
     // Filter by category slug
     if (categorySlug) {

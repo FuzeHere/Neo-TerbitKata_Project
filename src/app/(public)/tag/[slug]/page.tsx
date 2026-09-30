@@ -57,7 +57,7 @@ export default async function TagPage({ params }: TagPageProps) {
     where: { slug: resolvedParams.slug },
     include: {
       articles: {
-        where: { publishedAt: { not: null } },
+        where: { publishedAt: { not: null }, deletedAt: null },
         orderBy: { publishedAt: "desc" },
         include: {
           author: { select: { name: true } },

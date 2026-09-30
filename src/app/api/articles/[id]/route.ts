@@ -142,13 +142,42 @@ export async function DELETE(
     }
 
     // Role check: WRITER can only delete their own articles
-    if ((session.user as any).role === "WRITER" && currentArticle.authorId !== (session.user as any).id) {
+    const userRole = (session.user as any).role;
+    const userId = (session.user as any).id;
+
+    if (userRole === "WRITER" && currentArticle.authorId !== userId) {
       return NextResponse.json({ error: "Forbidden: Anda hanya dapat menghapus artikel milik sendiri" }, { status: 403 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const permanent = searchParams.get("permanent") === "true";
+
+    // Writers ALWAYS move to trash for admin intervention/approval.
+    // Super Admin also moves to trash unless explicit ?permanent=true is passed.
+    if (userRole === "WRITER" || !permanent) {
+      await db.article.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
+
+      return NextResponse.json({
+        message:
+          userRole === "WRITER"
+            ? "Permintaan hapus berhasil diajukan. Artikel telah dipindahkan ke kotak sampah untuk persetujuan admin dan sudah ditarik dari web."
+            : "Artikel dipindahkan ke kotak sampah dan sudah ditarik dari web.",
+        status: "TRASHED",
+      });
+    }
+
+    // Permanent delete
     await db.article.delete({ where: { id } });
-    return NextResponse.json({ message: "Artikel berhasil dihapus" });
+    return NextResponse.json({
+      message: "Artikel berhasil dihapus secara permanen.",
+      status: "DELETED",
+    });
   } catch (error) {
-    return NextResponse.json({ error: "Gagal menghapus artikel" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal memproses penghapusan artikel" }, { status: 500 });
   }
 }

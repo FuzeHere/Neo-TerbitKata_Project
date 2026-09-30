@@ -51,6 +51,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     ? await db.article.findMany({
         where: {
           publishedAt: { not: null },
+          deletedAt: null,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             { excerpt: { contains: query, mode: "insensitive" } },

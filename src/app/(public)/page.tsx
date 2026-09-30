@@ -6,6 +6,7 @@ import { TrendingUp, ChevronRight } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
 import HighlightSlider, { HighlightItem } from "@/components/public/HighlightSlider";
+import { cleanupExpiredTrash } from "@/lib/trash";
 
 export const revalidate = 0; // Ensure fresh data on every load
 
@@ -46,14 +47,23 @@ export const metadata: Metadata = {
 };
 
 export default async function Homepage() {
+  // Trigger auto cleanup of expired trash (> 3 days)
+  cleanupExpiredTrash().catch(console.error);
+
   const defaultThumb =
     "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80";
+
+  // Base filter for public visible articles: published and not in trash
+  const activePublishedFilter = {
+    publishedAt: { not: null },
+    deletedAt: null,
+  };
 
   // Fetch Highlight Articles (Requirement: Exactly 3 items: 2 manual highlights + 1 most read)
   // Step A: 2 manual highlights
   let manualFeatured = await db.article.findMany({
     where: {
-      publishedAt: { not: null },
+      ...activePublishedFilter,
       isFeatured: true,
     },
     orderBy: { publishedAt: "desc" },
@@ -69,7 +79,7 @@ export default async function Homepage() {
     const existingIds = manualFeatured.map((a) => a.id);
     const fillerArticles = await db.article.findMany({
       where: {
-        publishedAt: { not: null },
+        ...activePublishedFilter,
         id: { notIn: existingIds },
       },
       orderBy: { publishedAt: "desc" },
@@ -86,7 +96,7 @@ export default async function Homepage() {
   const manualFeaturedIds = manualFeatured.map((a) => a.id);
   let mostReadArticle = await db.article.findFirst({
     where: {
-      publishedAt: { not: null },
+      ...activePublishedFilter,
       id: { notIn: manualFeaturedIds },
     },
     orderBy: { views: "desc" },
@@ -135,7 +145,7 @@ export default async function Homepage() {
 
   // 3. Fetch ARTIKEL TRENDING (Top 5 articles by views)
   const trendingArticles = await db.article.findMany({
-    where: { publishedAt: { not: null } },
+    where: activePublishedFilter,
     orderBy: { views: "desc" },
     take: 5,
     include: {
@@ -150,7 +160,7 @@ export default async function Homepage() {
 
   // 4. Fetch DARI TERBITKATA PLUS / FOKUS UTAMA (3 articles)
   const plusArticles = await db.article.findMany({
-    where: { publishedAt: { not: null } },
+    where: activePublishedFilter,
     orderBy: { createdAt: "desc" },
     take: 3,
     include: {
@@ -160,7 +170,7 @@ export default async function Homepage() {
 
   // 5. Fetch ARTIKEL TERBARU (Latest 5 articles)
   const latestArticles = await db.article.findMany({
-    where: { publishedAt: { not: null } },
+    where: activePublishedFilter,
     orderBy: { publishedAt: "desc" },
     take: 5,
     include: {
@@ -174,7 +184,7 @@ export default async function Homepage() {
 
   // 6. Fetch KOLOM / OPINI (3 articles or opinion pieces)
   const opinionArticles = await db.article.findMany({
-    where: { publishedAt: { not: null } },
+    where: activePublishedFilter,
     orderBy: { publishedAt: "asc" },
     take: 3,
     include: {

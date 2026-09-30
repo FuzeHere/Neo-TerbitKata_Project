@@ -18,10 +18,10 @@ export async function POST(
 
     const existingArticle = await db.article.findUnique({
       where: { id },
-      select: { id: true, publishedAt: true }
+      select: { id: true, publishedAt: true, deletedAt: true }
     });
 
-    if (!existingArticle || !existingArticle.publishedAt) {
+    if (!existingArticle || !existingArticle.publishedAt || existingArticle.deletedAt) {
       return NextResponse.json({ error: "Artikel tidak ditemukan atau belum dipublikasikan" }, { status: 404 });
     }
 

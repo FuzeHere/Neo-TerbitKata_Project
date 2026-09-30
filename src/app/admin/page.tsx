@@ -1,26 +1,32 @@
 import React from "react";
 import { db } from "@/lib/db";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { FileText, FolderKanban, MessageSquare, Plus, ArrowRight, BookOpen, AlertCircle } from "lucide-react";
+import { FileText, FolderKanban, MessageSquare, Plus, ArrowRight, BookOpen, AlertCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
+import { cleanupExpiredTrash } from "@/lib/trash";
 
 export const revalidate = 0; // Force dynamic rendering
 
 export default async function AdminDashboard() {
+  cleanupExpiredTrash().catch(console.error);
+
   // Query data directly on server
   const [
     totalArticles,
+    pendingDeleteCount,
     totalCategories,
     totalComments,
     pendingCommentsCount,
     latestArticles
   ] = await Promise.all([
-    db.article.count(),
+    db.article.count({ where: { deletedAt: null } }),
+    db.article.count({ where: { deletedAt: { not: null } } }),
     db.category.count(),
     db.comment.count(),
     db.comment.count({ where: { status: "PENDING" } }),
     db.article.findMany({
+      where: { deletedAt: null },
       take: 5,
       orderBy: { createdAt: "desc" },
       include: {
@@ -91,6 +97,26 @@ export default async function AdminDashboard() {
           );
         })}
       </div>
+
+      {/* Notifications Alert if trash has pending deletions */}
+      {pendingDeleteCount > 0 && (
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 rounded-xl p-4 flex items-start gap-3">
+          <Trash2 className="h-5 w-5 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="font-semibold text-sm">Ada Artikel Menunggu Persetujuan Hapus / Intervensi</h4>
+            <p className="text-xs mt-1 text-slate-600 dark:text-slate-300">
+              Terdapat <strong>{pendingDeleteCount}</strong> artikel yang diajukan untuk dihapus oleh penulis di Kotak Sampah.
+              Artikel telah ditarik dari web dan akan terhapus otomatis setelah 3 hari jika tidak dipulihkan.
+            </p>
+            <Link 
+              href="/admin/trash" 
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline mt-2"
+            >
+              Buka Kotak Sampah <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Notifications Alert if comments are pending */}
       {pendingCommentsCount > 0 && (

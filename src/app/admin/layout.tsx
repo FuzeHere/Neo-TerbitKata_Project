@@ -11,10 +11,13 @@ import {
   Users, 
   Globe, 
   LogOut,
+  Trash2,
   User as UserIcon
 } from "lucide-react";
 import SessionProvider from "@/components/providers/SessionProvider";
 import LogoutButton from "@/components/admin/LogoutButton";
+import { db } from "@/lib/db";
+import { cleanupExpiredTrash } from "@/lib/trash";
 
 export default async function AdminLayout({
   children,
@@ -29,16 +32,37 @@ export default async function AdminLayout({
 
   const role = (session.user as any).role;
 
-  const menuItems = [
+  // Cleanup expired trash (> 3 days)
+  cleanupExpiredTrash().catch(console.error);
+
+  let trashCount = 0;
+  if (role === "SUPER_ADMIN") {
+    trashCount = await db.article.count({
+      where: { deletedAt: { not: null } },
+    });
+  }
+
+  const menuItems: Array<{
+    name: string;
+    href: string;
+    icon: any;
+    badge?: number;
+  }> = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Artikel", href: "/admin/articles", icon: FileText },
     { name: "Kategori & Tag", href: "/admin/categories", icon: FolderKanban },
     { name: "Komentar", href: "/admin/comments", icon: MessageSquare },
   ];
 
-  // Show user management only to Super Admins
+  // Show user management and trash bin to Super Admins
   if (role === "SUPER_ADMIN") {
     menuItems.push({ name: "Manajemen User", href: "/admin/users", icon: Users });
+    menuItems.push({
+      name: "Kotak Sampah",
+      href: "/admin/trash",
+      icon: Trash2,
+      badge: trashCount > 0 ? trashCount : undefined,
+    });
   }
 
   return (
@@ -62,10 +86,17 @@ export default async function AdminLayout({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  className="flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition group"
                 >
-                  <Icon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                  {item.name}
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-4 w-4 text-slate-500 dark:text-slate-400 group-hover:text-primary transition" />
+                    <span>{item.name}</span>
+                  </div>
+                  {item.badge !== undefined && (
+                    <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-xs">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

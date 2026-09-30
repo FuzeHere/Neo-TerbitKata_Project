@@ -16,8 +16,13 @@ interface EditArticlePageProps {
 export default async function EditArticlePage({ params }: EditArticlePageProps) {
   const resolvedParams = await params;
   const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  const userId = (session?.user as any)?.id;
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const role = (session.user as any)?.role;
+  const userId = (session.user as any)?.id;
 
   const article = await db.article.findUnique({
     where: { id: resolvedParams.id },
@@ -46,6 +51,15 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
     db.tag.findMany({ orderBy: { name: "asc" } })
   ]);
 
+  // Convert Date objects to strings for clean serialization to Client Component
+  const serializedArticle = {
+    ...article,
+    createdAt: article.createdAt.toISOString(),
+    updatedAt: article.updatedAt.toISOString(),
+    publishedAt: article.publishedAt ? article.publishedAt.toISOString() : null,
+    deletedAt: null,
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center gap-2.5 sm:gap-3">
@@ -61,7 +75,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
         </div>
       </div>
 
-      <ArticleForm categories={categories} tags={tags} article={article} />
+      <ArticleForm categories={categories} tags={tags} article={serializedArticle} />
     </div>
   );
 }

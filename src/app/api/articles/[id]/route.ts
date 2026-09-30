@@ -26,6 +26,14 @@ export async function GET(
       return NextResponse.json({ error: "Artikel tidak ditemukan" }, { status: 404 });
     }
 
+    // If article is in trash, only SUPER_ADMIN can view via this endpoint
+    if (article.deletedAt) {
+      const session = await getServerSession(authOptions);
+      if ((session?.user as any)?.role !== "SUPER_ADMIN") {
+        return NextResponse.json({ error: "Artikel tidak ditemukan" }, { status: 404 });
+      }
+    }
+
     return NextResponse.json(article);
   } catch (error) {
     return NextResponse.json({ error: "Gagal mengambil artikel" }, { status: 500 });
@@ -47,6 +55,14 @@ export async function PUT(
 
     if (!currentArticle) {
       return NextResponse.json({ error: "Artikel tidak ditemukan" }, { status: 404 });
+    }
+
+    // Articles in trash cannot be edited until restored
+    if (currentArticle.deletedAt) {
+      return NextResponse.json(
+        { error: "Artikel sedang berada di kotak sampah dan tidak dapat diedit sebelum dipulihkan oleh admin" },
+        { status: 400 }
+      );
     }
 
     // Role check: WRITER can only edit their own articles

@@ -16,6 +16,7 @@ const createArticleSchema = z.object({
   tagIds: z.array(z.string()).optional(),
   isPublished: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
+  isEditorChoice: z.boolean().optional(),
 });
 
 export async function GET(req: Request) {
@@ -127,7 +128,8 @@ export async function POST(req: Request) {
       categoryIds,
       tagIds,
       isPublished,
-      isFeatured
+      isFeatured,
+      isEditorChoice
     } = parsed.data;
 
     const slug = slugify(title);
@@ -137,8 +139,6 @@ export async function POST(req: Request) {
     if (existing) {
       return NextResponse.json({ error: "Artikel dengan judul serupa sudah ada" }, { status: 400 });
     }
-
-
 
     const article = await db.article.create({
       data: {
@@ -151,6 +151,7 @@ export async function POST(req: Request) {
         authorId: (session.user as any).id,
         publishedAt: isPublished ? new Date() : null,
         isFeatured: !!isFeatured,
+        isEditorChoice: !!isEditorChoice,
         categories: categoryIds ? {
           connect: categoryIds.map((id: string) => ({ id }))
         } : undefined,

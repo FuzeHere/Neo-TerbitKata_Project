@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
 import HighlightSlider, { HighlightItem } from "@/components/public/HighlightSlider";
 import { cleanupExpiredTrash } from "@/lib/trash";
+import { syncWeeklyViewsReset } from "@/lib/trending";
 
 export const revalidate = 0; // Ensure fresh data on every load
 
@@ -49,6 +50,8 @@ export const metadata: Metadata = {
 export default async function Homepage() {
   // Trigger auto cleanup of expired trash (> 3 days)
   cleanupExpiredTrash().catch(console.error);
+  // Auto-sync weekly views reset
+  syncWeeklyViewsReset().catch(console.error);
 
   const defaultThumb =
     "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80";
@@ -99,7 +102,7 @@ export default async function Homepage() {
       ...activePublishedFilter,
       id: { notIn: manualFeaturedIds },
     },
-    orderBy: { views: "desc" },
+    orderBy: [{ weeklyViews: "desc" }, { views: "desc" }],
     include: {
       author: { select: { name: true, avatar: true } },
       categories: { select: { name: true, slug: true } },
@@ -143,10 +146,14 @@ export default async function Homepage() {
       : []),
   ].slice(0, 3);
 
-  // 3. Fetch ARTIKEL TRENDING (Top 5 articles by views)
+  // 3. Fetch ARTIKEL TRENDING (Refreshed weekly, most visited counted after refresh)
   const trendingArticles = await db.article.findMany({
     where: activePublishedFilter,
-    orderBy: { views: "desc" },
+    orderBy: [
+      { weeklyViews: "desc" },
+      { views: "desc" },
+      { publishedAt: "desc" },
+    ],
     take: 5,
     include: {
       author: { select: { name: true, avatar: true } },
@@ -158,15 +165,34 @@ export default async function Homepage() {
   const topTrending = trendingArticles[0] || highlightItems[0];
   const sideTrending = trendingArticles.length > 1 ? trendingArticles.slice(1, 5) : trendingArticles;
 
-  // 4. Fetch DARI TERBITKATA PLUS / FOKUS UTAMA (3 articles)
-  const plusArticles = await db.article.findMany({
-    where: activePublishedFilter,
-    orderBy: { createdAt: "desc" },
+  // 4. Fetch PILIHAN TERBITKATA (Customized by admin via isEditorChoice, with fallback)
+  let pilihanArticles = await db.article.findMany({
+    where: {
+      ...activePublishedFilter,
+      isEditorChoice: true,
+    },
+    orderBy: { publishedAt: "desc" },
     take: 3,
     include: {
       categories: { select: { name: true, slug: true } },
     },
   });
+
+  if (pilihanArticles.length < 3) {
+    const existingPilihanIds = pilihanArticles.map((a) => a.id);
+    const fillerPilihan = await db.article.findMany({
+      where: {
+        ...activePublishedFilter,
+        id: { notIn: existingPilihanIds },
+      },
+      orderBy: { publishedAt: "desc" },
+      take: 3 - pilihanArticles.length,
+      include: {
+        categories: { select: { name: true, slug: true } },
+      },
+    });
+    pilihanArticles = [...pilihanArticles, ...fillerPilihan];
+  }
 
   // 5. Fetch ARTIKEL TERBARU (Latest 5 articles)
   const latestArticles = await db.article.findMany({
@@ -310,25 +336,25 @@ export default async function Homepage() {
         </div>
       </section>
 
-      {/* 3. DARI TERBITKATA PLUS (Dark Banner Section - Matches Image 3 "DARI TEMPO PLUS") */}
+      {/* 3. PILIHAN TERBITKATA (Dark Banner Section - Customizable by admin) */}
       <section className="rounded-2xl bg-slate-950 text-white p-6 sm:p-8 space-y-6">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 bg-primary inline-block"></span>
             <h2 className="font-black text-base sm:text-lg uppercase tracking-wider text-white">
-              Dari TerbitKata Plus
+              Pilihan TerbitKata
             </h2>
           </div>
           <Link
-            href="/kategori/investasi"
+            href="/pilihan-terbitkata"
             className="text-xs font-bold text-slate-400 hover:text-primary transition flex items-center gap-1"
           >
-            Jelajahi TerbitKata Plus <ChevronRight className="w-3.5 h-3.5" />
+            Jelajahi Pilihan TerbitKata <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plusArticles.map((item) => (
+          {pilihanArticles.map((item) => (
             <article key={item.id} className="space-y-3 group">
               <Link
                 href={`/${item.categories[0]?.slug || "berita"}/${item.slug}`}

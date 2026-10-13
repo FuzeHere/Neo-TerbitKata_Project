@@ -13,6 +13,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { getServerBaseUrl, toAbsoluteUrl } from "@/lib/url";
+import { syncWeeklyViewsReset } from "@/lib/trending";
 
 export const revalidate = 0;
 
@@ -100,6 +101,8 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     notFound();
   }
 
+  syncWeeklyViewsReset().catch(console.error);
+
   // Fetch Side Content Articles (matching Image 1: ARTIKEL TERBARU & ARTIKEL TRENDING)
   const [latestArticles, trendingArticles] = await Promise.all([
     db.article.findMany({
@@ -126,7 +129,11 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
         deletedAt: null,
         id: { not: article.id }
       },
-      orderBy: { views: "desc" },
+      orderBy: [
+        { weeklyViews: "desc" },
+        { views: "desc" },
+        { publishedAt: "desc" }
+      ],
       take: 5,
       select: {
         id: true,

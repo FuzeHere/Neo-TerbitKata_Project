@@ -39,6 +39,8 @@ async function main() {
     { name: 'Politik', slug: 'politik', description: 'Berita politik lokal dan regional Sulawesi' },
     { name: 'Ekonomi', slug: 'ekonomi', description: 'Berita ekonomi, bisnis, dan investasi di Sulawesi' },
     { name: 'Sulawesi', slug: 'sulawesi', description: 'Kabar umum dan peristiwa penting di wilayah Sulawesi' },
+    { name: 'Investasi', slug: 'investasi', description: 'Berita seputar iklim investasi, peluang bisnis, dan modal usaha' },
+    { name: 'Opini', slug: 'opini', description: 'Artikel opini, ulasan, dan kolom pemikiran pakar' },
   ];
 
   const categoryMap: Record<string, string> = {};

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { incrementArticleViews } from "@/lib/trending";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -16,29 +17,16 @@ export async function POST(
       return NextResponse.json({ error: "ID artikel tidak valid" }, { status: 400 });
     }
 
-    const existingArticle = await db.article.findUnique({
-      where: { id },
-      select: { id: true, publishedAt: true, deletedAt: true }
-    });
+    const updated = await incrementArticleViews(id);
 
-    if (!existingArticle || !existingArticle.publishedAt || existingArticle.deletedAt) {
+    if (!updated) {
       return NextResponse.json({ error: "Artikel tidak ditemukan atau belum dipublikasikan" }, { status: 404 });
     }
 
-    const updated = await db.article.update({
-      where: { id },
-      data: {
-        views: { increment: 1 }
-      },
-      select: {
-        id: true,
-        views: true
-      }
-    });
-
     return NextResponse.json({
       success: true,
-      views: updated.views
+      views: updated.views,
+      weeklyViews: updated.weeklyViews
     });
   } catch (error) {
     console.error("Gagal menambahkan view artikel:", error);

@@ -79,7 +79,8 @@ export async function PUT(
       categoryIds,
       tagIds,
       isPublished,
-      isFeatured
+      isFeatured,
+      isEditorChoice
     } = await req.json();
 
     if (!title || !content) {
@@ -108,8 +109,6 @@ export async function PUT(
       publishedAt = null;
     }
 
-
-
     // Update the article
     const updatedArticle = await db.article.update({
       where: { id },
@@ -122,6 +121,7 @@ export async function PUT(
         thumbnailCaption,
         publishedAt,
         isFeatured: !!isFeatured,
+        isEditorChoice: isEditorChoice !== undefined ? !!isEditorChoice : false,
         // Replace existing relationships
         categories: {
           set: [], // Clear relations
@@ -135,6 +135,42 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedArticle);
+  } catch (error) {
+    return NextResponse.json({ error: "Gagal memperbarui artikel" }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: RouteParams
+) {
+  try {
+    const { id } = await params;
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const currentArticle = await db.article.findUnique({ where: { id } });
+    if (!currentArticle) {
+      return NextResponse.json({ error: "Artikel tidak ditemukan" }, { status: 404 });
+    }
+
+    const body = await req.json();
+    const updateData: any = {};
+    if (typeof body.isEditorChoice === "boolean") {
+      updateData.isEditorChoice = body.isEditorChoice;
+    }
+    if (typeof body.isFeatured === "boolean") {
+      updateData.isFeatured = body.isFeatured;
+    }
+
+    const updated = await db.article.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ error: "Gagal memperbarui artikel" }, { status: 500 });
   }

@@ -39,6 +39,9 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
   const [isFeatured, setIsFeatured] = useState<boolean>(
     article ? !!article.isFeatured : false
   );
+  const [isEditorChoice, setIsEditorChoice] = useState<boolean>(
+    article ? !!article.isEditorChoice : false
+  );
 
   // New Category inline creation state
   const [showAddCategory, setShowAddCategory] = useState(false);
@@ -158,6 +161,7 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
       tagIds: selectedTags,
       isPublished,
       isFeatured,
+      isEditorChoice,
     };
 
     try {
@@ -291,6 +295,19 @@ export default function ArticleForm({ categories, tags, article }: ArticleFormPr
                 type="checkbox"
                 checked={isFeatured}
                 onChange={(e) => setIsFeatured(e.target.checked)}
+                className="rounded text-primary border-slate-300 focus:ring-primary h-4 w-4 cursor-pointer"
+              />
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-850 pt-4">
+              <div>
+                <span className="text-sm font-medium block">Pilihan TerbitKata</span>
+                <span className="text-[10px] text-slate-500 block">Tampilkan di section Pilihan TerbitKata di homepage</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={isEditorChoice}
+                onChange={(e) => setIsEditorChoice(e.target.checked)}
                 className="rounded text-primary border-slate-300 focus:ring-primary h-4 w-4 cursor-pointer"
               />
             </div>

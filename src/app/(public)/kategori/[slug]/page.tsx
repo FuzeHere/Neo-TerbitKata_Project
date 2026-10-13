@@ -1,9 +1,9 @@
 import React from "react";
 import { db } from "@/lib/db";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Clock } from "lucide-react";
+import { Clock, FolderX } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
 
@@ -20,6 +20,12 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   });
 
   if (!category) {
+    const tag = await db.tag.findUnique({
+      where: { slug: resolvedParams.slug },
+    });
+    if (tag) {
+      return { title: `Topik #${tag.name} - TerbitKata` };
+    }
     return { title: "Kategori Tidak Ditemukan - TerbitKata" };
   }
 
@@ -68,7 +74,57 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   });
 
   if (!category) {
-    notFound();
+    // If slug matches a tag (e.g. 'investasi'), gracefully redirect to /tag/slug
+    const tag = await db.tag.findUnique({
+      where: { slug: resolvedParams.slug }
+    });
+    if (tag) {
+      redirect(`/tag/${tag.slug}`);
+    }
+
+    // Otherwise render a helpful category fallback with available categories
+    const allCategories = await db.category.findMany({
+      orderBy: { name: "asc" },
+      take: 8
+    });
+
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-6">
+        <div className="mx-auto w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+          <FolderX className="w-8 h-8" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Kategori Tidak Ditemukan
+        </h1>
+        <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+          Kategori &ldquo;{resolvedParams.slug}&rdquo; tidak ditemukan atau sedang dalam proses pembaruan oleh redaksi.
+        </p>
+        <div className="pt-4 space-y-3">
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+            Pilih kategori berita lainnya:
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {allCategories.map((c) => (
+              <Link
+                key={c.id}
+                href={`/kategori/${c.slug}`}
+                className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-slate-100 hover:bg-primary hover:text-white dark:bg-slate-800 transition"
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="pt-6">
+          <Link
+            href="/"
+            className="inline-block text-xs font-bold text-primary hover:underline"
+          >
+            ← Kembali ke Beranda TerbitKata
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const articles = category.articles;
@@ -115,18 +171,18 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                   />
                 </div>
                 <h4 className="font-bold text-base text-slate-900 dark:text-white hover:text-primary transition line-clamp-2 leading-snug">
-                  <Link href={`/${category.slug}/${article.slug}`}>
+                  <Link href={`/${article.categories[0]?.slug || category.slug || "berita"}/${article.slug}`}>
                     {article.title}
                   </Link>
                 </h4>
-                <p className="text-slate-550 dark:text-slate-400 text-xs line-clamp-2 leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-400 text-xs line-clamp-2 leading-relaxed">
                   {article.excerpt}
                 </p>
               </div>
 
               <div className="flex items-center justify-between border-t border-border pt-4 mt-4 text-[10px] text-muted-foreground">
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{article.author.name}</span>
-                <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {formatDate(article.publishedAt!)}</span>
+                <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {article.publishedAt ? formatDate(article.publishedAt) : ""}</span>
               </div>
             </article>
           ))}

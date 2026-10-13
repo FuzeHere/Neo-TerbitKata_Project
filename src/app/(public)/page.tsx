@@ -8,6 +8,7 @@ import { Metadata } from "next";
 import HighlightSlider, { HighlightItem } from "@/components/public/HighlightSlider";
 import { cleanupExpiredTrash } from "@/lib/trash";
 import { syncWeeklyViewsReset } from "@/lib/trending";
+import { WebsiteJsonLd } from "@/components/seo/JsonLd";
 
 export const revalidate = 0; // Ensure fresh data on every load
 
@@ -44,6 +45,16 @@ export const metadata: Metadata = {
     title: "TerbitKata - Portal Berita Digital Independen Terpercaya",
     description: "TerbitKata menyajikan berita terkini secara aktual, tepercaya, dan mendalam.",
     images: ["/logo.png"],
+  },
+  alternates: {
+    canonical: "https://terbitkata.xyz",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+    "max-video-preview": -1,
   },
 };
 
@@ -232,7 +243,9 @@ export default async function Homepage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
+    <>
+      <WebsiteJsonLd />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
       {/* 1. Headline Carousel (Auto-sliding every 5s, 3 highlights: 2 manual + 1 top read) */}
       <section aria-label="Sorotan Berita Utama">
         <HighlightSlider highlights={highlightItems} />
@@ -543,5 +556,6 @@ export default async function Homepage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

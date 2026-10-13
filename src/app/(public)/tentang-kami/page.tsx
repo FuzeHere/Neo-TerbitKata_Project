@@ -3,11 +3,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { Mail, ShieldCheck, Newspaper, Users, Award, MapPin } from "lucide-react";
 import { Metadata } from "next";
+import { getStaticBaseUrl } from "@/lib/url";
 
 export const metadata: Metadata = {
   title: "Tentang Kami & Kontak Redaksi - TerbitKata",
   description:
     "Mengenal lebih dekat TerbitKata, visi jurnalisme berkualitas, susunan redaksi, serta kontak resmi kami di terbitkatasupport@gmail.com.",
+  alternates: {
+    canonical: `${getStaticBaseUrl()}/tentang-kami`,
+  },
 };
 
 export default function TentangKamiPage() {

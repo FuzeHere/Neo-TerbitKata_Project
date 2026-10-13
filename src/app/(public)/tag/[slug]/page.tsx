@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Clock } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
+import { getStaticBaseUrl } from "@/lib/url";
 
 export const revalidate = 0;
 
@@ -15,6 +16,7 @@ interface TagPageProps {
 
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
   const resolvedParams = await params;
+  const baseUrl = getStaticBaseUrl();
   const tag = await db.tag.findUnique({
     where: { slug: resolvedParams.slug }
   });
@@ -25,10 +27,14 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
 
   const title = `Berita dengan Tag #${tag.name} - TerbitKata`;
   const description = `Daftar berita terbaru yang diberi tag #${tag.name} di TerbitKata.`;
+  const canonicalUrl = `${baseUrl}/tag/${tag.slug}`;
 
   return {
     title,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title,
       description,

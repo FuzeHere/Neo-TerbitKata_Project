@@ -10,6 +10,12 @@ export const metadata: Metadata = {
     template: "%s | TerbitKata",
   },
   description: "Portal berita digital independen terpercaya dengan berita teraktual dan mendalam.",
+  alternates: {
+    canonical: "./",
+    types: {
+      "application/rss+xml": "/feed.xml",
+    },
+  },
   openGraph: {
     title: "TerbitKata - Portal Berita Digital Terpercaya",
     description: "Portal berita digital independen terpercaya dengan berita teraktual dan mendalam.",

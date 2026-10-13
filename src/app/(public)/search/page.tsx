@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Clock } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
+import { getStaticBaseUrl } from "@/lib/url";
 
 export const revalidate = 0;
 
@@ -14,13 +15,22 @@ interface SearchPageProps {
 
 export async function generateMetadata({ searchParams }: SearchPageProps): Promise<Metadata> {
   const resolvedSearchParams = await searchParams;
+  const baseUrl = getStaticBaseUrl();
   const query = resolvedSearchParams.q || "";
   const title = query ? `Hasil Pencarian untuk "${query}" - TerbitKata` : "Pencarian Berita - TerbitKata";
   const description = `Cari berita terhangat dan artikel mendalam di portal berita digital TerbitKata.`;
+  const canonicalUrl = `${baseUrl}/search${query ? `?q=${encodeURIComponent(query)}` : ""}`;
 
   return {
     title,
     description,
+    robots: {
+      index: false,
+      follow: true,
+    },
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title,
       description,

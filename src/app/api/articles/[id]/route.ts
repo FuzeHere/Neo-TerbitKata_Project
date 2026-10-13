@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
+import { notifySearchEngines } from "@/lib/indexing";
+import { getStaticBaseUrl } from "@/lib/url";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -133,6 +135,16 @@ export async function PUT(
         }
       }
     });
+
+    // Notify search engines in the background if the article is published
+    if (updatedArticle.publishedAt) {
+      const baseUrl = getStaticBaseUrl();
+      const category = categoryIds?.[0]
+        ? (await db.category.findUnique({ where: { id: categoryIds[0] }, select: { slug: true } }))?.slug || "berita"
+        : "berita";
+      const articleUrl = `${baseUrl}/${category}/${updatedArticle.slug}`;
+      notifySearchEngines(articleUrl).catch(console.error);
+    }
 
     return NextResponse.json(updatedArticle);
   } catch (error) {

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Clock, FolderX } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
+import { getStaticBaseUrl } from "@/lib/url";
 
 export const revalidate = 0;
 
@@ -15,6 +16,7 @@ interface CategoryPageProps {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const resolvedParams = await params;
+  const baseUrl = getStaticBaseUrl();
   const category = await db.category.findUnique({
     where: { slug: resolvedParams.slug }
   });
@@ -24,17 +26,26 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       where: { slug: resolvedParams.slug },
     });
     if (tag) {
-      return { title: `Topik #${tag.name} - TerbitKata` };
+      return {
+        title: `Topik #${tag.name} - TerbitKata`,
+        alternates: {
+          canonical: `${baseUrl}/kategori/${resolvedParams.slug}`,
+        },
+      };
     }
     return { title: "Kategori Tidak Ditemukan - TerbitKata" };
   }
 
   const title = `Berita Seputar ${category.name} - TerbitKata`;
   const description = category.description || `Kumpulan berita terupdate seputar ${category.name} di TerbitKata.`;
+  const canonicalUrl = `${baseUrl}/kategori/${category.slug}`;
 
   return {
     title,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title,
       description,

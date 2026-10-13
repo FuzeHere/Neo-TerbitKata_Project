@@ -12,8 +12,9 @@ import ArticleActionRail from "@/components/public/ArticleActionRail";
 import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { getServerBaseUrl, toAbsoluteUrl } from "@/lib/url";
+import { getServerBaseUrl, toAbsoluteUrl, getStaticBaseUrl } from "@/lib/url";
 import { syncWeeklyViewsReset } from "@/lib/trending";
+import ArticleJsonLd, { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 export const revalidate = 0;
 
@@ -78,6 +79,13 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
       title: article.title,
       description,
       images: [ogImageUrl],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
     },
   };
 }
@@ -166,31 +174,22 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   return (
     <>
       <ArticleViewTracker articleId={article.id} />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "NewsArticle",
-            "headline": article.title,
-            "image": [absoluteThumbnail],
-            "datePublished": article.publishedAt.toISOString(),
-            "dateModified": article.updatedAt.toISOString(),
-            "author": {
-              "@type": "Person",
-              "name": article.author.name
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "TerbitKata",
-              "logo": {
-                "@type": "ImageObject",
-                "url": `${baseUrl}/logo.png`
-              }
-            },
-            "description": article.excerpt
-          })
-        }}
+      <ArticleJsonLd
+        title={article.title}
+        description={article.excerpt || article.title}
+        url={articleUrl}
+        thumbnailUrl={absoluteThumbnail}
+        publishedAt={article.publishedAt}
+        modifiedAt={article.updatedAt}
+        authorName={article.author.name}
+        categoryName={primaryCategory.name}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Beranda", url: `${getStaticBaseUrl()}/` },
+          { name: primaryCategory.name, url: `${getStaticBaseUrl()}/kategori/${primaryCategory.slug}` },
+          { name: article.title, url: articleUrl },
+        ]}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">

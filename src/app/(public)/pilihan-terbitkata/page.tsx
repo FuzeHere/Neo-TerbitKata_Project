@@ -5,12 +5,16 @@ import Image from "next/image";
 import { Clock, Sparkles } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Metadata } from "next";
+import { getStaticBaseUrl } from "@/lib/url";
 
 export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Pilihan TerbitKata - Artikel & Berita Pilihan Redaksi",
   description: "Kumpulan artikel dan liputan mendalam pilihan redaksi TerbitKata.",
+  alternates: {
+    canonical: `${getStaticBaseUrl()}/pilihan-terbitkata`,
+  },
 };
 
 export default async function PilihanTerbitKataPage() {

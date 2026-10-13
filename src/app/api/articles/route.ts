@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { cleanupExpiredTrash } from "@/lib/trash";
+import { notifySearchEngines } from "@/lib/indexing";
+import { getStaticBaseUrl } from "@/lib/url";
 
 const createArticleSchema = z.object({
   title: z.string().trim().min(3, "Judul artikel minimal 3 karakter").max(200, "Judul artikel maksimal 200 karakter"),
@@ -160,6 +162,16 @@ export async function POST(req: Request) {
         } : undefined
       }
     });
+
+    // Notify search engines in the background if the article is published
+    if (article.publishedAt) {
+      const baseUrl = getStaticBaseUrl();
+      const category = categoryIds?.[0]
+        ? (await db.category.findUnique({ where: { id: categoryIds[0] }, select: { slug: true } }))?.slug || "berita"
+        : "berita";
+      const articleUrl = `${baseUrl}/${category}/${article.slug}`;
+      notifySearchEngines(articleUrl).catch(console.error);
+    }
 
     return NextResponse.json(article);
   } catch (error) {
